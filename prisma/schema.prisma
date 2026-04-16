@@ -1,0 +1,64 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+}
+
+enum ActivityType {
+  Ride
+  Run
+  Walk
+}
+
+model User {
+  id                  String     @id @default(uuid())
+  email               String     @unique
+  name                String?
+  createdAt           DateTime   @default(now())
+  stravaConnected     Boolean    @default(false)
+  stravaAthleteId     String?
+  stravaAccessToken   String?
+  stravaRefreshToken  String?
+  stravaExpiresAt     DateTime?
+  activities          Activity[]
+  points              Point[]
+
+  @@map("users")
+}
+
+model Activity {
+  id                 String       @id @default(uuid())
+  userId             String       @map("user_id")
+  user               User         @relation(fields: [userId], references: [id])
+  stravaActivityId   String       @unique @map("strava_activity_id")
+  activityType       ActivityType @map("activity_type")
+  distance           Float        // km
+  startLocation      Json?        @map("start_location")
+  endLocation        Json?        @map("end_location")
+  eligibleForPoints  Boolean      @default(true) @map("eligible_for_points")
+  pointsAwarded      Int          @default(0) @map("points_awarded")
+  createdAt          DateTime     @default(now()) @map("created_at")
+  activityDate       DateTime     @map("activity_date")
+  points             Point[]
+
+  @@map("activities")
+}
+
+model Point {
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  user            User      @relation(fields: [userId], references: [id])
+  activityId      String?   @map("activity_id")
+  activity        Activity? @relation(fields: [activityId], references: [id])
+  points          Int
+  description     String
+  transactionType String    @default("Earned") @map("transaction_type")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  @@map("points")
+}

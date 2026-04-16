@@ -43,3 +43,8 @@ next-env.d.ts
 
 #Ignore cursor AI rules
 .cursor/rules/codacy.mdc
+
+/src/generated/prisma
+
+# clerk configuration (can include secrets)
+/.clerk/
