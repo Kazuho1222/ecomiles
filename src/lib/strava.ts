@@ -121,6 +121,17 @@ export const calculatePoints = (
 };
 
 /**
+ * CO2排出削減量の計算 (kg)
+ * 自動車（ガソリン車）の平均排出量: 約0.17kg/km と仮定
+ * 参考: 国土交通省のデータ等
+ */
+export const CO2_REDUCTION_FACTOR = 0.17; // kg CO2 / km
+
+export const calculateCO2Reduction = (distanceKm: number): number => {
+	return distanceKm * CO2_REDUCTION_FACTOR;
+};
+
+/**
  * アクティビティの取得 (最新100件)
  */
 export const getStravaActivities = async (

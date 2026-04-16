@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { SyncButton } from "@/components/SyncButton";
 import { Button } from "@/components/ui/button";
 import prisma from "@/lib/prisma";
+import { calculateCO2Reduction } from "@/lib/strava";
+import { Bike, Footprints, SportShoe } from "lucide-react";
 
 export default async function DashboardPage() {
 	const { userId } = await auth();
@@ -18,7 +20,6 @@ export default async function DashboardPage() {
 		include: {
 			activities: {
 				orderBy: { activityDate: "desc" },
-				take: 5,
 			},
 			points: true,
 		},
@@ -26,6 +27,16 @@ export default async function DashboardPage() {
 
 	const totalPoints =
 		user?.points.reduce((sum: number, p: Point) => sum + p.points, 0) || 0;
+
+	const totalDistance =
+		user?.activities.reduce(
+			(sum: number, a: Activity) => sum + a.distance,
+			0,
+		) || 0;
+
+	const totalCO2Reduction = calculateCO2Reduction(totalDistance);
+
+	const recentActivities = user?.activities.slice(0, 5) || [];
 
 	return (
 		<main className="flex min-h-screen flex-col items-center p-8 lg:p-24">
@@ -36,13 +47,23 @@ export default async function DashboardPage() {
 				</div>
 			</div>
 
-			<div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl">
+			<div className="grid grid-cols-1 md:grid-cols-4 gap-6 w-full max-w-5xl">
 				{/* ポイント概要 */}
 				<div className="p-6 bg-green-50 rounded-xl border border-green-200 shadow-sm">
 					<h2 className="text-sm font-medium text-green-800 uppercase tracking-wider mb-2">
 						現在のポイント
 					</h2>
 					<p className="text-4xl font-bold text-green-900">{totalPoints} pts</p>
+				</div>
+
+				{/* CO2削減量 */}
+				<div className="p-6 bg-emerald-50 rounded-xl border border-emerald-200 shadow-sm">
+					<h2 className="text-sm font-medium text-emerald-800 uppercase tracking-wider mb-2">
+						CO2削減貢献度
+					</h2>
+					<p className="text-4xl font-bold text-emerald-900">
+						{totalCO2Reduction.toFixed(2)} <span className="text-sm">kg</span>
+					</p>
 				</div>
 
 				{/* Strava 連携状況 */}
@@ -87,7 +108,7 @@ export default async function DashboardPage() {
 					<h2 className="text-2xl font-bold">最近のアクティビティ</h2>
 					{user?.stravaConnected && <SyncButton />}
 				</div>
-				{user?.activities && user.activities.length > 0 ? (
+				{recentActivities.length > 0 ? (
 					<div className="overflow-x-auto border rounded-xl shadow-sm bg-white">
 						<table className="min-w-full divide-y divide-gray-200">
 							<thead className="bg-gray-50">
@@ -102,21 +123,30 @@ export default async function DashboardPage() {
 										距離 (km)
 									</th>
 									<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider">
+										CO2削減量 (kg)
+									</th>
+									<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 tracking-wider">
 										獲得ポイント
 									</th>
 								</tr>
 							</thead>
 							<tbody className="bg-white divide-y divide-gray-200">
-								{user.activities.map((activity: Activity) => (
+								{recentActivities.map((activity: Activity) => (
 									<tr key={activity.id}>
 										<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
 											{new Date(activity.activityDate).toLocaleDateString()}
 										</td>
-										<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+										<td className="flex px-6 py-4 gap-2 whitespace-nowrap text-sm text-gray-900">
+											{activity.activityType === "Ride" ? <Bike /> : ""}
+											{activity.activityType === "Walk" ? <Footprints /> : ""}
+											{activity.activityType === "Run" ? <SportShoe /> : ""}
 											{activity.activityType}
 										</td>
 										<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
 											{activity.distance.toFixed(2)}
+										</td>
+										<td className="px-6 py-4 whitespace-nowrap text-sm text-emerald-600 font-medium">
+											{calculateCO2Reduction(activity.distance).toFixed(2)}
 										</td>
 										<td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-bold">
 											+{activity.pointsAwarded}
