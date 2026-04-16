@@ -1,9 +1,10 @@
-import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
-import prisma from "@/lib/prisma";
 import { UserButton } from "@clerk/nextjs";
-import { Button } from "@/components/ui/button";
+import { auth } from "@clerk/nextjs/server";
+import type { Activity, Point } from "@prisma/client";
+import { redirect } from "next/navigation";
 import { SyncButton } from "@/components/SyncButton";
+import { Button } from "@/components/ui/button";
+import prisma from "@/lib/prisma";
 
 export default async function DashboardPage() {
 	const { userId } = await auth();
@@ -23,7 +24,8 @@ export default async function DashboardPage() {
 		},
 	});
 
-	const totalPoints = user?.points.reduce((sum, p) => sum + p.points, 0) || 0;
+	const totalPoints =
+		user?.points.reduce((sum: number, p: Point) => sum + p.points, 0) || 0;
 
 	return (
 		<main className="flex min-h-screen flex-col items-center p-8 lg:p-24">
@@ -105,7 +107,7 @@ export default async function DashboardPage() {
 								</tr>
 							</thead>
 							<tbody className="bg-white divide-y divide-gray-200">
-								{user.activities.map((activity) => (
+								{user.activities.map((activity: Activity) => (
 									<tr key={activity.id}>
 										<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
 											{new Date(activity.activityDate).toLocaleDateString()}

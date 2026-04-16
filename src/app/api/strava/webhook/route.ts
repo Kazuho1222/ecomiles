@@ -1,6 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { syncSingleActivity } from "@/lib/strava";
 
+export const dynamic = "force-dynamic";
+
 /**
  * Strava Webhook Endpoint
  * 
