@@ -132,6 +132,30 @@ export const calculateCO2Reduction = (distanceKm: number): number => {
 };
 
 /**
+ * 地球の寿命（温暖化閾値到達までの時間）をどのくらい延ばしたかの推定 (秒)
+ * 概算ロジック:
+ * 1. 1°C上昇に必要な累積CO2排出量を約2兆トン(2,000 GtCO2)と仮定
+ * 2. 現在のペースで1°C上昇するのに約50年かかると仮定 (50年 = 1,577,880,000秒)
+ * 3. 1kgの削減 = (1,577,880,000 / 2,000,000,000,000) 秒 ≈ 0.000000788秒
+ */
+export const calculateEarthLifespanExtension = (
+	co2ReductionKg: number,
+): number => {
+	const secondsPerKg = 1577880000 / 2000000000000;
+	return co2ReductionKg * secondsPerKg;
+};
+
+/**
+ * 北極の氷をどれくらい守ったかの推定 (kg)
+ * 1kgのCO2削減 ≈ 3kgの北極の氷の融解を阻止 (Science誌の研究に基づく)
+ */
+export const calculateIceMeltingPrevention = (
+	co2ReductionKg: number,
+): number => {
+	return co2ReductionKg * 3.0;
+};
+
+/**
  * アクティビティの取得 (最新100件)
  */
 export const getStravaActivities = async (

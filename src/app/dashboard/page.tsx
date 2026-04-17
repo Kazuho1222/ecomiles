@@ -5,8 +5,13 @@ import { redirect } from "next/navigation";
 import { SyncButton } from "@/components/SyncButton";
 import { Button } from "@/components/ui/button";
 import prisma from "@/lib/prisma";
-import { calculateCO2Reduction } from "@/lib/strava";
-import { Bike, Footprints, SportShoe } from "lucide-react";
+import {
+	calculateCO2Reduction,
+	calculateEarthLifespanExtension,
+	calculateIceMeltingPrevention,
+} from "@/lib/strava";
+import { formatActivityDate } from "@/lib/utils";
+import { Bike, Footprints, SportShoe, ThermometerSun, IceCream } from "lucide-react";
 
 export default async function DashboardPage() {
 	const { userId } = await auth();
@@ -35,6 +40,8 @@ export default async function DashboardPage() {
 		) || 0;
 
 	const totalCO2Reduction = calculateCO2Reduction(totalDistance);
+	const lifespanExtension = calculateEarthLifespanExtension(totalCO2Reduction);
+	const iceSaved = calculateIceMeltingPrevention(totalCO2Reduction);
 
 	const recentActivities = user?.activities.slice(0, 5) || [];
 
@@ -47,7 +54,7 @@ export default async function DashboardPage() {
 				</div>
 			</div>
 
-			<div className="grid grid-cols-1 md:grid-cols-4 gap-6 w-full max-w-5xl">
+			<div className="grid grid-cols-1 md:grid-cols-4 gap-6 w-full max-w-5xl mb-8">
 				{/* ポイント概要 */}
 				<div className="p-6 bg-green-50 rounded-xl border border-green-200 shadow-sm">
 					<h2 className="text-sm font-medium text-green-800 uppercase tracking-wider mb-2">
@@ -102,6 +109,45 @@ export default async function DashboardPage() {
 				</div>
 			</div>
 
+			{/* 環境貢献の詳細指標 */}
+			<div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-5xl mt-4">
+				<div className="flex items-center p-6 bg-orange-50 rounded-xl border border-orange-200 shadow-sm">
+					<div className="mr-4 p-3 bg-orange-100 rounded-full">
+						<ThermometerSun className="text-orange-600 w-8 h-8" />
+					</div>
+					<div>
+						<h3 className="text-sm font-bold text-orange-800 uppercase mb-1">
+							地球の寿命を延ばした時間
+						</h3>
+						<p className="text-2xl font-bold text-orange-900">
+							{lifespanExtension < 0.001 
+								? `${(lifespanExtension * 1000000).toFixed(2)} μ秒` 
+								: `${lifespanExtension.toFixed(6)} 秒`}
+						</p>
+						<p className="text-xs text-orange-700 mt-1">
+							※1℃上昇までの時間を推計
+						</p>
+					</div>
+				</div>
+
+				<div className="flex items-center p-6 bg-cyan-50 rounded-xl border border-cyan-200 shadow-sm">
+					<div className="mr-4 p-3 bg-cyan-100 rounded-full">
+						<IceCream className="text-cyan-600 w-8 h-8" />
+					</div>
+					<div>
+						<h3 className="text-sm font-bold text-cyan-800 uppercase mb-1">
+							北極の氷を守った量
+						</h3>
+						<p className="text-2xl font-bold text-cyan-900">
+							{iceSaved.toFixed(2)} <span className="text-lg">kg</span>
+						</p>
+						<p className="text-xs text-cyan-700 mt-1">
+							※CO2削減量から融解阻止量を推計
+						</p>
+					</div>
+				</div>
+			</div>
+
 			{/* 最近のアクティビティ */}
 			<div className="mt-12 w-full max-w-5xl">
 				<div className="flex items-center justify-between mb-6">
@@ -134,9 +180,10 @@ export default async function DashboardPage() {
 								{recentActivities.map((activity: Activity) => (
 									<tr key={activity.id}>
 										<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-											{new Date(activity.activityDate).toLocaleDateString()}
+											{formatActivityDate(activity.activityDate)}
 										</td>
 										<td className="flex px-6 py-4 gap-2 whitespace-nowrap text-sm text-gray-900">
+
 											{activity.activityType === "Ride" ? <Bike /> : ""}
 											{activity.activityType === "Walk" ? <Footprints /> : ""}
 											{activity.activityType === "Run" ? <SportShoe /> : ""}
