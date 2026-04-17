@@ -1,7 +1,9 @@
 import { UserButton } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
 import type { Activity, Point } from "@prisma/client";
+import { Bike, Footprints, SportShoe } from "lucide-react";
 import { redirect } from "next/navigation";
+import RealtimeDashboard from "@/components/RealtimeDashboard";
 import { SyncButton } from "@/components/SyncButton";
 import { Button } from "@/components/ui/button";
 import prisma from "@/lib/prisma";
@@ -11,8 +13,6 @@ import {
 	calculateIceMeltingPrevention,
 } from "@/lib/strava";
 import { formatActivityDate } from "@/lib/utils";
-import { Bike, Footprints, SportShoe } from "lucide-react";
-import RealtimeDashboard from "@/components/RealtimeDashboard";
 
 export default async function DashboardPage() {
 	const { userId } = await auth();
@@ -73,16 +73,16 @@ export default async function DashboardPage() {
 							Strava 連携
 						</h2>
 						{user?.stravaConnected ? (
-							<p className="text-xl font-semibold text-blue-900">連携済み (ID: {user.stravaAthleteId})</p>
+							<p className="text-xl font-semibold text-blue-900">
+								連携済み (ID: {user.stravaAthleteId})
+							</p>
 						) : (
 							<p className="text-xl font-semibold text-gray-500">未連携</p>
 						)}
 					</div>
 					{!user?.stravaConnected && (
 						<a href="/api/strava/auth">
-							<Button size="sm">
-								連携する
-							</Button>
+							<Button size="sm">連携する</Button>
 						</a>
 					)}
 				</div>
@@ -93,7 +93,10 @@ export default async function DashboardPage() {
 						ユーザー
 					</h2>
 					<p className="text-xl font-semibold text-gray-900">
-						{user?.name || "ゲスト"} <span className="text-xs font-normal text-gray-500">({user?.email})</span>
+						{user?.name || "ゲスト"}{" "}
+						<span className="text-xs font-normal text-gray-500">
+							({user?.email})
+						</span>
 					</p>
 				</div>
 			</div>
