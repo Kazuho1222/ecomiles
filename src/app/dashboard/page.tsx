@@ -11,7 +11,8 @@ import {
 	calculateIceMeltingPrevention,
 } from "@/lib/strava";
 import { formatActivityDate } from "@/lib/utils";
-import { Bike, Footprints, SportShoe, ThermometerSun, IceCream } from "lucide-react";
+import { Bike, Footprints, SportShoe } from "lucide-react";
+import RealtimeDashboard from "@/components/RealtimeDashboard";
 
 export default async function DashboardPage() {
 	const { userId } = await auth();
@@ -45,6 +46,13 @@ export default async function DashboardPage() {
 
 	const recentActivities = user?.activities.slice(0, 5) || [];
 
+	const dashboardData = {
+		totalPoints,
+		totalCO2Reduction,
+		lifespanExtension,
+		iceSaved,
+	};
+
 	return (
 		<main className="flex min-h-screen flex-col items-center p-8 lg:p-24">
 			<div className="z-10 max-w-5xl w-full flex items-center justify-between font-mono text-sm mb-12">
@@ -54,102 +62,44 @@ export default async function DashboardPage() {
 				</div>
 			</div>
 
-			<div className="grid grid-cols-1 md:grid-cols-4 gap-6 w-full max-w-5xl mb-8">
-				{/* ポイント概要 */}
-				<div className="p-6 bg-green-50 rounded-xl border border-green-200 shadow-sm">
-					<h2 className="text-sm font-medium text-green-800 uppercase tracking-wider mb-2">
-						現在のポイント
-					</h2>
-					<p className="text-4xl font-bold text-green-900">{totalPoints} pts</p>
-				</div>
+			{/* インタラクティブな数値カード */}
+			<RealtimeDashboard initialData={dashboardData} />
 
-				{/* CO2削減量 */}
-				<div className="p-6 bg-emerald-50 rounded-xl border border-emerald-200 shadow-sm">
-					<h2 className="text-sm font-medium text-emerald-800 uppercase tracking-wider mb-2">
-						CO2削減貢献度
-					</h2>
-					<p className="text-4xl font-bold text-emerald-900">
-						{totalCO2Reduction.toFixed(2)} <span className="text-sm">kg</span>
-					</p>
-				</div>
-
+			<div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-5xl mb-12">
 				{/* Strava 連携状況 */}
-				<div className="p-6 bg-blue-50 rounded-xl border border-blue-200 shadow-sm">
-					<h2 className="text-sm font-medium text-blue-800 uppercase tracking-wider mb-2">
-						Strava 連携
-					</h2>
-					{user?.stravaConnected ? (
-						<div>
-							<p className="text-xl font-semibold text-blue-900">連携済み</p>
-							<p className="text-xs text-blue-700 mt-1">
-								ID: {user.stravaAthleteId}
-							</p>
-						</div>
-					) : (
-						<div>
+				<div className="p-6 bg-blue-50 rounded-xl border border-blue-200 shadow-sm flex items-center justify-between">
+					<div>
+						<h2 className="text-sm font-medium text-blue-800 uppercase tracking-wider mb-1">
+							Strava 連携
+						</h2>
+						{user?.stravaConnected ? (
+							<p className="text-xl font-semibold text-blue-900">連携済み (ID: {user.stravaAthleteId})</p>
+						) : (
 							<p className="text-xl font-semibold text-gray-500">未連携</p>
-							<a href="/api/strava/auth">
-								<Button size="sm" className="mt-2">
-									連携する
-								</Button>
-							</a>
-						</div>
+						)}
+					</div>
+					{!user?.stravaConnected && (
+						<a href="/api/strava/auth">
+							<Button size="sm">
+								連携する
+							</Button>
+						</a>
 					)}
 				</div>
 
 				{/* ユーザー情報 */}
 				<div className="p-6 bg-white rounded-xl border border-gray-200 shadow-sm">
-					<h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">
-						ユーザー名
+					<h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-1">
+						ユーザー
 					</h2>
 					<p className="text-xl font-semibold text-gray-900">
-						{user?.name || "ゲストユーザー"}
+						{user?.name || "ゲスト"} <span className="text-xs font-normal text-gray-500">({user?.email})</span>
 					</p>
-					<p className="text-xs text-gray-500">{user?.email}</p>
-				</div>
-			</div>
-
-			{/* 環境貢献の詳細指標 */}
-			<div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-5xl mt-4">
-				<div className="flex items-center p-6 bg-orange-50 rounded-xl border border-orange-200 shadow-sm">
-					<div className="mr-4 p-3 bg-orange-100 rounded-full">
-						<ThermometerSun className="text-orange-600 w-8 h-8" />
-					</div>
-					<div>
-						<h3 className="text-sm font-bold text-orange-800 uppercase mb-1">
-							地球の寿命を延ばした時間
-						</h3>
-						<p className="text-2xl font-bold text-orange-900">
-							{lifespanExtension < 0.001 
-								? `${(lifespanExtension * 1000000).toFixed(2)} μ秒` 
-								: `${lifespanExtension.toFixed(6)} 秒`}
-						</p>
-						<p className="text-xs text-orange-700 mt-1">
-							※1℃上昇までの時間を推計
-						</p>
-					</div>
-				</div>
-
-				<div className="flex items-center p-6 bg-cyan-50 rounded-xl border border-cyan-200 shadow-sm">
-					<div className="mr-4 p-3 bg-cyan-100 rounded-full">
-						<IceCream className="text-cyan-600 w-8 h-8" />
-					</div>
-					<div>
-						<h3 className="text-sm font-bold text-cyan-800 uppercase mb-1">
-							北極の氷を守った量
-						</h3>
-						<p className="text-2xl font-bold text-cyan-900">
-							{iceSaved.toFixed(2)} <span className="text-lg">kg</span>
-						</p>
-						<p className="text-xs text-cyan-700 mt-1">
-							※CO2削減量から融解阻止量を推計
-						</p>
-					</div>
 				</div>
 			</div>
 
 			{/* 最近のアクティビティ */}
-			<div className="mt-12 w-full max-w-5xl">
+			<div className="w-full max-w-5xl">
 				<div className="flex items-center justify-between mb-6">
 					<h2 className="text-2xl font-bold">最近のアクティビティ</h2>
 					{user?.stravaConnected && <SyncButton />}
@@ -183,7 +133,6 @@ export default async function DashboardPage() {
 											{formatActivityDate(activity.activityDate)}
 										</td>
 										<td className="flex px-6 py-4 gap-2 whitespace-nowrap text-sm text-gray-900">
-
 											{activity.activityType === "Ride" ? <Bike /> : ""}
 											{activity.activityType === "Walk" ? <Footprints /> : ""}
 											{activity.activityType === "Run" ? <SportShoe /> : ""}

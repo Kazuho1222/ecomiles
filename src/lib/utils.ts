@@ -16,6 +16,7 @@ export function formatActivityDate(date: Date | string) {
 		hour: "2-digit",
 		minute: "2-digit",
 		hour12: false,
+		timeZone: "Asia/Tokyo",
 	};
 
 	if (!isCurrentYear) {
