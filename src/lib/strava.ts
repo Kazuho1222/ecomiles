@@ -307,7 +307,7 @@ export const syncActivities = async (userId: string) => {
 	// 最後に同期したアクティビティの時間を取得 (なければ30日前から)
 	const lastActivityDate = user.activities[0]?.activityDate;
 	const afterTimestamp = lastActivityDate
-		? Math.floor(lastActivityDate.getTime() / 1000)
+		? Math.floor(lastActivityDate.getTime() / 1000) - 7 * 24 * 60 * 60 // 7日間前からチェックして抜け漏れを確実に防ぐ
 		: Math.floor(Date.now() / 1000) - 30 * 24 * 60 * 60;
 
 	const rawActivities = await getStravaActivities(accessToken, afterTimestamp);
