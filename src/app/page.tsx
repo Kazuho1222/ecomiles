@@ -70,17 +70,14 @@ export default async function Home() {
 									Strava
 									アカウントを連携するだけで、移動距離がポイントに変わります。
 								</p>
-								<button
-									type="button"
-									className="inline-block cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-md hover:shadow-xl rounded-md border-none p-0 m-0 bg-transparent"
-								>
-									<SignInButton
-										mode="modal"
-										forceRedirectUrl="/api/strava/auth"
+								<SignInButton mode="modal" forceRedirectUrl="/api/strava/auth">
+									<button
+										type="button"
+										className="inline-block cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-md hover:shadow-xl rounded-md border-none p-0 m-0 bg-transparent"
 									>
 										<ConnectWithStrava />
-									</SignInButton>
-								</button>
+									</button>
+								</SignInButton>
 							</div>
 
 							<div className="grid grid-cols-1 md:grid-cols-2 gap-8">

@@ -10,6 +10,12 @@ const STRAVA_REDIRECT_URI =
 		? "http://localhost:3000/api/strava/callback"
 		: process.env.STRAVA_REDIRECT_URI;
 
+if (!STRAVA_REDIRECT_URI) {
+	throw new Error(
+		"STRAVA_REDIRECT_URI environment variable is required in production",
+	);
+}
+
 export const getStravaAuthUrl = () => {
 	const params = new URLSearchParams({
 		client_id: STRAVA_CLIENT_ID!,
@@ -316,7 +322,9 @@ export const syncActivities = async (userId: string) => {
 		: Math.floor(Date.now() / 1000) - 30 * 24 * 60 * 60;
 
 	const rawActivities = await getStravaActivities(accessToken, afterTimestamp);
-	console.log(`Fetched ${rawActivities.length} activities from Strava since ${new Date(afterTimestamp * 1000).toISOString()}`);
+	console.log(
+		`Fetched ${rawActivities.length} activities from Strava since ${new Date(afterTimestamp * 1000).toISOString()}`,
+	);
 
 	// 重複を除去しつつ保存
 	let newActivitiesCount = 0;
@@ -324,10 +332,16 @@ export const syncActivities = async (userId: string) => {
 
 	for (const stravaAct of rawActivities) {
 		const type = mapStravaTypeToPrisma(stravaAct.type);
-		console.log(`Processing activity: ${stravaAct.name}, Type: ${stravaAct.type}, Mapped Type: ${type}, Distance: ${stravaAct.distance}m`);
-		
+		if (process.env.NODE_ENV === "development") {
+			console.log(
+				`Processing activity: ${stravaAct.name}, Type: ${stravaAct.type}, Mapped Type: ${type}, Distance: ${stravaAct.distance}m`,
+			);
+		}
+
 		if (!type) {
-			console.log(`Activity ${stravaAct.id} skipped: unsupported type ${stravaAct.type}`);
+			console.log(
+				`Activity ${stravaAct.id} skipped: unsupported type ${stravaAct.type}`,
+			);
 			continue;
 		}
 
