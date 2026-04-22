@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
 		mode,
 		token,
 		challenge,
-		expectedToken: VERIFY_TOKEN,
+		tokenMatch: token === VERIFY_TOKEN,
 	});
 
 	if (mode === "subscribe" && token === VERIFY_TOKEN) {
@@ -52,16 +52,10 @@ export async function POST(request: NextRequest) {
 				`${aspect_type === "create" ? "New" : "Updated"} activity detected: ${object_id} for user ${owner_id}`,
 			);
 
-			// 非同期で同期処理を実行
-			try {
-				const result = await syncSingleActivity(
-					owner_id.toString(),
-					object_id.toString(),
-				);
-				console.log("Sync result:", result);
-			} catch (err) {
-				console.error("Sync error:", err);
-			}
+			// 非同期で同期処理を実行（レスポンスを待たずに処理）
+			syncSingleActivity(owner_id.toString(), object_id.toString())
+				.then((result) => console.log("Sync result:", result))
+				.catch((err) => console.error("Sync error:", err));
 		}
 
 		return NextResponse.json({ status: "ok" });
