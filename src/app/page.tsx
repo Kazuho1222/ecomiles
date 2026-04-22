@@ -2,7 +2,6 @@ import { SignInButton, UserButton } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { ConnectWithStrava, PoweredByStrava } from "@/components/StravaLogo";
-import { Button } from "@/components/ui/button";
 import prisma from "@/lib/prisma";
 
 export default async function Home() {
@@ -29,7 +28,12 @@ export default async function Home() {
 							<UserButton />
 						) : (
 							<SignInButton mode="modal">
-								<Button variant="outline">ログイン</Button>
+								<button
+									type="button"
+									className="px-4 py-2 border rounded-md hover:bg-slate-100 transition-colors cursor-pointer"
+								>
+									ログイン
+								</button>
 							</SignInButton>
 						)}
 					</div>
@@ -51,29 +55,50 @@ export default async function Home() {
 							</p>
 							<a
 								href="/api/strava/auth"
-								className="inline-block transition-transform hover:scale-105 active:scale-95"
+								className="inline-block transition-transform hover:scale-105 active:scale-95 shadow-lg rounded-md overflow-hidden"
 							>
 								<ConnectWithStrava />
 							</a>
 						</div>
 					) : (
-						<div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
-							<div className="p-8 border rounded-2xl bg-slate-50 dark:bg-slate-900/50">
-								<h3 className="text-xl font-bold mb-3">
-									自動でポイント獲得
-								</h3>
-								<p className="text-gray-500">
+						<div className="flex flex-col items-center gap-8">
+							<div className="p-10 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 transition-all hover:shadow-2xl mb-8">
+								<h2 className="text-2xl font-semibold mb-4">
+									今すぐ始めましょう
+								</h2>
+								<p className="mb-8 text-gray-500">
 									Strava
-									アカウントを連携するだけで、日々の移動が自動的にポイントに変わります。
+									アカウントを連携するだけで、移動距離がポイントに変わります。
 								</p>
+								<button
+									type="button"
+									className="inline-block cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-md hover:shadow-xl rounded-md border-none p-0 m-0 bg-transparent"
+								>
+									<SignInButton
+										mode="modal"
+										forceRedirectUrl="/api/strava/auth"
+									>
+										<ConnectWithStrava />
+									</SignInButton>
+								</button>
 							</div>
-							<div className="p-8 border rounded-2xl bg-slate-50 dark:bg-slate-900/50">
-								<h3 className="text-xl font-bold mb-3">
-									環境への貢献を可視化
-								</h3>
-								<p className="text-gray-500">
-									CO2削減量や守った氷の量など、あなたの活動が地球に与えるインパクトを実感できます。
-								</p>
+
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+								<div className="p-8 border rounded-2xl bg-slate-50 dark:bg-slate-900/50">
+									<h3 className="text-xl font-bold mb-3">自動でポイント獲得</h3>
+									<p className="text-gray-500">
+										Strava
+										アカウントを連携するだけで、日々の移動が自動的にポイントに変わります。
+									</p>
+								</div>
+								<div className="p-8 border rounded-2xl bg-slate-50 dark:bg-slate-900/50">
+									<h3 className="text-xl font-bold mb-3">
+										環境への貢献を可視化
+									</h3>
+									<p className="text-gray-500">
+										CO2削減量や守った氷の量など、あなたの活動が地球に与えるインパクトを実感できます。
+									</p>
+								</div>
 							</div>
 						</div>
 					)}

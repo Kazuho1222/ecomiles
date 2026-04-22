@@ -3,7 +3,12 @@ import prisma from "./prisma";
 
 const STRAVA_CLIENT_ID = process.env.STRAVA_CLIENT_ID;
 const STRAVA_CLIENT_SECRET = process.env.STRAVA_CLIENT_SECRET;
-const STRAVA_REDIRECT_URI = process.env.STRAVA_REDIRECT_URI;
+
+// 環境に応じてリダイレクト先を自動切り替え
+const STRAVA_REDIRECT_URI =
+	process.env.NODE_ENV === "development"
+		? "http://localhost:3000/api/strava/callback"
+		: process.env.STRAVA_REDIRECT_URI;
 
 export const getStravaAuthUrl = () => {
 	const params = new URLSearchParams({
@@ -311,6 +316,7 @@ export const syncActivities = async (userId: string) => {
 		: Math.floor(Date.now() / 1000) - 30 * 24 * 60 * 60;
 
 	const rawActivities = await getStravaActivities(accessToken, afterTimestamp);
+	console.log(`Fetched ${rawActivities.length} activities from Strava since ${new Date(afterTimestamp * 1000).toISOString()}`);
 
 	// 重複を除去しつつ保存
 	let newActivitiesCount = 0;
@@ -318,7 +324,12 @@ export const syncActivities = async (userId: string) => {
 
 	for (const stravaAct of rawActivities) {
 		const type = mapStravaTypeToPrisma(stravaAct.type);
-		if (!type) continue;
+		console.log(`Processing activity: ${stravaAct.name}, Type: ${stravaAct.type}, Mapped Type: ${type}, Distance: ${stravaAct.distance}m`);
+		
+		if (!type) {
+			console.log(`Activity ${stravaAct.id} skipped: unsupported type ${stravaAct.type}`);
+			continue;
+		}
 
 		const pointsToAward = calculatePoints(type, stravaAct.distance);
 

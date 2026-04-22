@@ -36,12 +36,11 @@ export async function POST(request: NextRequest) {
 
     const { aspect_type, object_id, object_type, owner_id } = data;
 
-    // アクティビティが作成された場合のみ処理
-    if (object_type === "activity" && aspect_type === "create") {
-      console.log(`New activity detected: ${object_id} for user ${owner_id}`);
+    // アクティビティが作成または更新された場合に処理
+    if (object_type === "activity" && (aspect_type === "create" || aspect_type === "update")) {
+      console.log(`${aspect_type === "create" ? "New" : "Updated"} activity detected: ${object_id} for user ${owner_id}`);
       
       // 非同期で同期処理を実行
-      // (Stravaは2秒以内のレスポンスを期待するため、重い処理は待たない)
       syncSingleActivity(owner_id.toString(), object_id.toString())
         .then(result => console.log("Sync result:", result))
         .catch(err => console.error("Sync error:", err));
