@@ -1,10 +1,11 @@
 import { UserButton } from "@clerk/nextjs";
-import { auth } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import type { Activity, Point } from "@prisma/client";
 import { Bike, Footprints, SportShoe } from "lucide-react";
 import { redirect } from "next/navigation";
 import { Leaderboard } from "@/components/Leaderboard";
 import RealtimeDashboard from "@/components/RealtimeDashboard";
+import { ShareModal } from "@/components/ShareModal";
 import { ConnectWithStrava, PoweredByStrava } from "@/components/StravaLogo";
 import { SyncButton } from "@/components/SyncButton";
 import prisma from "@/lib/prisma";
@@ -21,6 +22,7 @@ import { formatActivityDate } from "@/lib/utils";
 
 export default async function DashboardPage() {
 	const { userId } = await auth();
+	const clerkUser = await currentUser();
 
 	if (!userId) {
 		redirect("/");
@@ -66,6 +68,15 @@ export default async function DashboardPage() {
 		ledBulbHours,
 	};
 
+	const shareData = {
+		totalPoints,
+		totalCO2Reduction,
+		iceSaved,
+		cedarTrees,
+		userName: user?.name || "Athlete",
+		avatarUrl: clerkUser?.imageUrl,
+	};
+
 	return (
 		<main className="flex min-h-screen flex-col items-center p-8 lg:p-24 bg-slate-50 dark:bg-black">
 			<div className="z-10 max-w-5xl w-full flex items-center justify-between font-mono text-sm mb-12">
@@ -73,6 +84,9 @@ export default async function DashboardPage() {
 					EcoMiles Dashboard
 				</h1>
 				<div className="flex items-center gap-4">
+					<div className="w-full max-w-5xl flex justify-center">
+						<ShareModal data={shareData} />
+					</div>
 					<UserButton />
 				</div>
 			</div>

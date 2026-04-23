@@ -1,5 +1,4 @@
-import React from "react";
-import { Trees, IceCream, Leaf, Zap } from "lucide-react";
+import { IceCream, Leaf, Trees, Zap } from "lucide-react";
 
 interface CollectiveImpactProps {
 	data: {
