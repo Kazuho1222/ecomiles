@@ -52,10 +52,17 @@ export async function POST(request: NextRequest) {
 				`${aspect_type === "create" ? "New" : "Updated"} activity detected: ${object_id} for user ${owner_id}`,
 			);
 
-			// 非同期で同期処理を実行（レスポンスを待たずに処理）
-			syncSingleActivity(owner_id.toString(), object_id.toString())
-				.then((result) => console.log("Sync result:", result))
-				.catch((err) => console.error("Sync error:", err));
+			// Vercel(サーバーレス)環境では、NextResponseを返す前にawaitしないと
+			// 処理が完了する前にインスタンスが終了してしまうため、awaitを必須とする
+			try {
+				const result = await syncSingleActivity(
+					owner_id.toString(),
+					object_id.toString(),
+				);
+				console.log("Sync result:", result);
+			} catch (err) {
+				console.error("Sync error during webhook processing:", err);
+			}
 		}
 
 		return NextResponse.json({ status: "ok" });
