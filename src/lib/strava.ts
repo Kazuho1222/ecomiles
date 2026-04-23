@@ -167,6 +167,38 @@ export const calculateIceMeltingPrevention = (
 };
 
 /**
+ * 杉の木が1年間に吸収する量に換算 (本・年)
+ * 杉の木1本は1年間に約14kgのCO2を吸収する (林野庁データ等)
+ */
+export const CEDAR_ABSORPTION_PER_YEAR = 14;
+
+export const calculateCedarTreeEquivalent = (
+	co2ReductionKg: number,
+): number => {
+	return co2ReductionKg / CEDAR_ABSORPTION_PER_YEAR;
+};
+
+/**
+ * スマートフォンのフル充電回数に換算
+ * 1回のフル充電で約0.005kgのCO2排出と仮定
+ */
+export const SMARTPHONE_CHARGE_CO2 = 0.005;
+
+export const calculateSmartphoneCharges = (co2ReductionKg: number): number => {
+	return co2ReductionKg / SMARTPHONE_CHARGE_CO2;
+};
+
+/**
+ * LED電球の使用時間に換算
+ * 1時間の使用で約0.002kgのCO2排出と仮定 (消費電力にもよるが概算)
+ */
+export const LED_BULB_HOUR_CO2 = 0.002;
+
+export const calculateLEDBulbHours = (co2ReductionKg: number): number => {
+	return co2ReductionKg / LED_BULB_HOUR_CO2;
+};
+
+/**
  * アクティビティの取得 (最新100件)
  */
 export const getStravaActivities = async (
