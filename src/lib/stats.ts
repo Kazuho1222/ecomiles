@@ -31,26 +31,45 @@ export const getCollectiveImpact = async () => {
 };
 
 export const getLeaderboard = async (limit = 5) => {
-	const usersWithPoints = await prisma.user.findMany({
+	// 1. ポイントテーブルでユーザーごとに合計ポイントを集計し、降順でソートして制限件数分取得
+	const pointAggregates = await prisma.point.groupBy({
+		by: ["userId"],
+		_sum: {
+			points: true,
+		},
+		orderBy: {
+			_sum: {
+				points: "desc",
+			},
+		},
+		take: limit,
+	});
+
+	if (pointAggregates.length === 0) return [];
+
+	// 2. ランクインしたユーザーの情報を取得
+	const userIds = pointAggregates.map((item) => item.userId);
+	const users = await prisma.user.findMany({
+		where: {
+			id: { in: userIds },
+		},
 		select: {
 			id: true,
 			name: true,
-			points: {
-				select: {
-					points: true,
-				},
-			},
 		},
 	});
 
-	const leaderboard = usersWithPoints
-		.map((user) => ({
-			id: user.id,
-			name: user.name || "Anonymous Athlete",
-			totalPoints: user.points.reduce((sum, p) => sum + p.points, 0),
-		}))
-		.sort((a, b) => b.totalPoints - a.totalPoints)
-		.slice(0, limit);
+	// 3. 集計結果とユーザー情報をマッピングし、元の順序（ポイント順）を維持
+	const leaderboard = pointAggregates
+		.map((item) => {
+			const user = users.find((u) => u.id === item.userId);
+			return {
+				id: item.userId,
+				name: user?.name || "Anonymous Athlete",
+				totalPoints: item._sum.points || 0,
+			};
+		})
+		.filter((item) => item.totalPoints > 0);
 
 	return leaderboard;
 };
