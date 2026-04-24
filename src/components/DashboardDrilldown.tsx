@@ -41,7 +41,6 @@ interface DashboardDrilldownProps {
 export const DashboardDrilldown: React.FC<DashboardDrilldownProps> = ({
 	dashboardData,
 	activities,
-	points,
 	stravaConnected,
 }) => {
 	const [selectedMetric, setSelectedMetric] = useState<MetricType>("co2");
