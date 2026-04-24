@@ -1,15 +1,11 @@
 import { UserButton } from "@clerk/nextjs";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import type { Activity, Point } from "@prisma/client";
-import { Bike, Footprints, SportShoe } from "lucide-react";
 import { redirect } from "next/navigation";
+import { DashboardDrilldown } from "@/components/DashboardDrilldown";
 import { Leaderboard } from "@/components/Leaderboard";
-import RealtimeDashboard from "@/components/RealtimeDashboard";
 import { ShareModal } from "@/components/ShareModal";
 import { ConnectWithStrava, PoweredByStrava } from "@/components/StravaLogo";
-import { SyncButton } from "@/components/SyncButton";
-import prisma from "@/lib/prisma";
-import { getLeaderboard } from "@/lib/stats";
 import {
 	calculateCedarTreeEquivalent,
 	calculateCO2Reduction,
@@ -17,8 +13,9 @@ import {
 	calculateIceMeltingPrevention,
 	calculateLEDBulbHours,
 	calculateSmartphoneCharges,
-} from "@/lib/strava";
-import { formatActivityDate } from "@/lib/utils";
+} from "@/lib/eco-utils";
+import prisma from "@/lib/prisma";
+import { getLeaderboard } from "@/lib/stats";
 
 export default async function DashboardPage() {
 	const { userId } = await auth();
@@ -34,7 +31,9 @@ export default async function DashboardPage() {
 			activities: {
 				orderBy: { activityDate: "desc" },
 			},
-			points: true,
+			points: {
+				orderBy: { createdAt: "desc" },
+			},
 		},
 	});
 
@@ -55,8 +54,6 @@ export default async function DashboardPage() {
 	const cedarTrees = calculateCedarTreeEquivalent(totalCO2Reduction);
 	const smartphoneCharges = calculateSmartphoneCharges(totalCO2Reduction);
 	const ledBulbHours = calculateLEDBulbHours(totalCO2Reduction);
-
-	const recentActivities = user?.activities.slice(0, 5) || [];
 
 	const dashboardData = {
 		totalPoints,
@@ -91,8 +88,13 @@ export default async function DashboardPage() {
 				</div>
 			</div>
 
-			{/* インタラクティブな数値カード */}
-			<RealtimeDashboard initialData={dashboardData} />
+			{/* インタラクティブな数値カード & ドリルダウン履歴 */}
+			<DashboardDrilldown
+				dashboardData={dashboardData}
+				activities={user?.activities || []}
+				points={user?.points || []}
+				stravaConnected={!!user?.stravaConnected}
+			/>
 
 			<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 w-full max-w-5xl mb-12">
 				<div className="lg:col-span-2 space-y-8">
@@ -124,108 +126,6 @@ export default async function DashboardPage() {
 									Athlete ID: {user.stravaAthleteId}
 								</span>
 								<div className="bg-orange-500 h-3 w-3 rounded-full animate-pulse shadow-[0_0_10px_rgba(249,115,22,0.5)]" />
-							</div>
-						)}
-					</div>
-
-					{/* 最近のアクティビティ */}
-					<div className="w-full">
-						<div className="flex items-center justify-between mb-6">
-							<h2 className="text-2xl font-black">最近のアクティビティ</h2>
-							{user?.stravaConnected && <SyncButton />}
-						</div>
-						{recentActivities.length > 0 ? (
-							<div className="overflow-x-auto border rounded-2xl shadow-sm bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 transition-all">
-								<table className="min-w-full divide-y divide-gray-200 dark:divide-slate-800">
-									<thead className="bg-slate-50 dark:bg-slate-800/50">
-										<tr>
-											<th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-widest">
-												日付
-											</th>
-											<th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-widest">
-												タイプ
-											</th>
-											<th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-widest">
-												距離
-											</th>
-											<th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-widest">
-												削減量
-											</th>
-											<th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-widest truncate">
-												ポイント
-											</th>
-											<th className="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-widest">
-												詳細
-											</th>
-										</tr>
-									</thead>
-									<tbody className="bg-white dark:bg-slate-900 divide-y divide-gray-200 dark:divide-slate-800">
-										{recentActivities.map((activity: Activity) => (
-											<tr
-												key={activity.id}
-												className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors"
-											>
-												<td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-													{formatActivityDate(activity.activityDate)}
-												</td>
-												<td className="px-6 py-4 whitespace-nowrap text-sm">
-													<div className="flex items-center gap-2">
-														{activity.activityType === "Ride" ? (
-															<Bike className="w-4 h-4 text-orange-500" />
-														) : (
-															""
-														)}
-														{activity.activityType === "Walk" ? (
-															<Footprints className="w-4 h-4 text-emerald-500" />
-														) : (
-															""
-														)}
-														{activity.activityType === "Run" ? (
-															<SportShoe className="w-4 h-4 text-blue-500" />
-														) : (
-															""
-														)}
-														<span className="font-bold">
-															{activity.activityType}
-														</span>
-													</div>
-												</td>
-												<td className="px-6 py-4 whitespace-nowrap text-sm font-bold">
-													{activity.distance.toFixed(2)}{" "}
-													<small className="text-slate-400 font-normal">
-														km
-													</small>
-												</td>
-												<td className="px-6 py-4 whitespace-nowrap text-sm text-emerald-600 dark:text-emerald-400 font-black">
-													{calculateCO2Reduction(activity.distance).toFixed(2)}{" "}
-													<small className="font-normal opacity-70">kg</small>
-												</td>
-												<td className="px-6 py-4 whitespace-nowrap text-sm text-green-600 dark:text-green-400 font-black">
-													+{activity.pointsAwarded}
-												</td>
-												<td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-													<a
-														href={`https://www.strava.com/activities/${activity.stravaActivityId}`}
-														target="_blank"
-														rel="noopener noreferrer"
-														className="text-[#FC5200] hover:underline font-black text-xs uppercase"
-													>
-														View on Strava
-													</a>
-												</td>
-											</tr>
-										))}
-									</tbody>
-								</table>
-							</div>
-						) : (
-							<div className="p-16 text-center bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
-								<p className="text-slate-500">
-									アクティビティはまだありません。
-								</p>
-								<p className="text-sm text-slate-400 mt-2">
-									Strava で最初のアクティビティを記録してみましょう！
-								</p>
 							</div>
 						)}
 					</div>

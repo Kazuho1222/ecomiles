@@ -13,20 +13,35 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import EcoMetricCard from "@/components/EcoMetricCard";
 
+export type MetricType =
+	| "points"
+	| "co2"
+	| "lifespan"
+	| "ice"
+	| "cedar"
+	| "smartphone"
+	| "led";
+
+export interface DashboardData {
+	totalPoints: number;
+	totalCO2Reduction: number;
+	lifespanExtension: number;
+	iceSaved: number;
+	cedarTrees: number;
+	smartphoneCharges: number;
+	ledBulbHours: number;
+}
+
 interface RealtimeDashboardProps {
-	initialData: {
-		totalPoints: number;
-		totalCO2Reduction: number;
-		lifespanExtension: number;
-		iceSaved: number;
-		cedarTrees: number;
-		smartphoneCharges: number;
-		ledBulbHours: number;
-	};
+	initialData: DashboardData;
+	onMetricSelect?: (metric: MetricType) => void;
+	selectedMetric?: MetricType;
 }
 
 export default function RealtimeDashboard({
 	initialData,
+	onMetricSelect,
+	selectedMetric,
 }: RealtimeDashboardProps) {
 	const router = useRouter();
 	const [data, setData] = useState(initialData);
@@ -37,7 +52,6 @@ export default function RealtimeDashboard({
 	}, [initialData]);
 
 	// 背景での自動更新（ポーリング）
-	// Webhookで裏側でデータが更新された場合でも、30秒ごとに画面をリフレッシュしてアニメーションさせる
 	useEffect(() => {
 		const interval = setInterval(() => {
 			router.refresh();
@@ -45,6 +59,12 @@ export default function RealtimeDashboard({
 
 		return () => clearInterval(interval);
 	}, [router]);
+
+	const handleMetricClick = (metric: MetricType) => {
+		if (onMetricSelect) {
+			onMetricSelect(metric);
+		}
+	};
 
 	return (
 		<div className="w-full max-w-5xl">
@@ -57,6 +77,8 @@ export default function RealtimeDashboard({
 					className="bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900 shadow-sm"
 					titleClassName="text-green-800 dark:text-green-400"
 					valueClassName="text-green-900 dark:text-green-200"
+					onClick={() => handleMetricClick("points")}
+					isActive={selectedMetric === "points"}
 				/>
 
 				<EcoMetricCard
@@ -68,6 +90,8 @@ export default function RealtimeDashboard({
 					className="bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900 shadow-sm"
 					titleClassName="text-emerald-800 dark:text-emerald-400"
 					valueClassName="text-emerald-900 dark:text-emerald-200"
+					onClick={() => handleMetricClick("co2")}
+					isActive={selectedMetric === "co2"}
 				/>
 
 				<EcoMetricCard
@@ -84,6 +108,8 @@ export default function RealtimeDashboard({
 					titleClassName="text-orange-800 dark:text-orange-400"
 					valueClassName="text-orange-900 dark:text-orange-200"
 					description="※1℃上昇までの時間を推計"
+					onClick={() => handleMetricClick("lifespan")}
+					isActive={selectedMetric === "lifespan"}
 				/>
 
 				<EcoMetricCard
@@ -96,6 +122,8 @@ export default function RealtimeDashboard({
 					titleClassName="text-cyan-800 dark:text-cyan-400"
 					valueClassName="text-cyan-900 dark:text-cyan-200"
 					description="※融解阻止量を推計"
+					onClick={() => handleMetricClick("ice")}
+					isActive={selectedMetric === "ice"}
 				/>
 			</div>
 
@@ -108,6 +136,8 @@ export default function RealtimeDashboard({
 					icon={<Trees className="text-green-700 w-5 h-5" />}
 					className="bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 shadow-sm"
 					description="※杉の木1本の年間吸収量"
+					onClick={() => handleMetricClick("cedar")}
+					isActive={selectedMetric === "cedar"}
 				/>
 
 				<EcoMetricCard
@@ -118,6 +148,8 @@ export default function RealtimeDashboard({
 					icon={<Smartphone className="text-blue-600 w-5 h-5" />}
 					className="bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 shadow-sm"
 					description="※フル充電1回のCO2排出量"
+					onClick={() => handleMetricClick("smartphone")}
+					isActive={selectedMetric === "smartphone"}
 				/>
 
 				<EcoMetricCard
@@ -128,6 +160,8 @@ export default function RealtimeDashboard({
 					icon={<Lightbulb className="text-yellow-500 w-5 h-5" />}
 					className="bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 shadow-sm"
 					description="※LED電球(10W)の連続使用"
+					onClick={() => handleMetricClick("led")}
+					isActive={selectedMetric === "led"}
 				/>
 			</div>
 		</div>
