@@ -23,6 +23,41 @@ export const StravaSymbol = ({
 );
 
 /**
+ * Strava ロゴ (シンボル + テキスト)
+ */
+export const StravaLogo = ({
+	color = "#FC5200",
+	width = 120,
+}: { color?: string; width?: number }) => {
+	const height = width / 4.5;
+	const symbolSize = height * 1.2;
+
+	return (
+		<div
+			style={{
+				display: "inline-flex",
+				alignItems: "center",
+				gap: "4px",
+			}}
+		>
+			<StravaSymbol color={color} size={symbolSize} />
+			<span
+				style={{
+					fontSize: `${height}px`,
+					fontWeight: 900,
+					color: color,
+					fontStyle: "italic",
+					letterSpacing: "-0.05em",
+					lineHeight: 1,
+				}}
+			>
+				STRAVA
+			</span>
+		</div>
+	);
+};
+
+/**
  * Strava "Connect with Strava" ボタン
  * 公式ガイドラインに準拠した CSS/SVG ハイブリッド実装
  */
