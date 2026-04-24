@@ -4,6 +4,7 @@ import type { Activity, Point } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { DashboardDrilldown } from "@/components/DashboardDrilldown";
 import { Leaderboard } from "@/components/Leaderboard";
+import { BadgeList } from "@/components/BadgeList";
 import { ShareModal } from "@/components/ShareModal";
 import { ConnectWithStrava, PoweredByStrava } from "@/components/StravaLogo";
 import {
@@ -16,6 +17,7 @@ import {
 } from "@/lib/eco-utils";
 import prisma from "@/lib/prisma";
 import { getLeaderboard } from "@/lib/stats";
+import { checkAndAwardBadges } from "@/lib/badge-service";
 
 export default async function DashboardPage() {
 	const { userId } = await auth();
@@ -25,6 +27,9 @@ export default async function DashboardPage() {
 		redirect("/");
 	}
 
+	// ページ表示時にバッジ獲得をチェック
+	await checkAndAwardBadges(userId);
+
 	const user = await prisma.user.findUnique({
 		where: { id: userId },
 		include: {
@@ -33,6 +38,12 @@ export default async function DashboardPage() {
 			},
 			points: {
 				orderBy: { createdAt: "desc" },
+			},
+			badges: {
+				include: {
+					badge: true,
+				},
+				orderBy: { awardedAt: "desc" },
 			},
 		},
 	});
@@ -132,6 +143,9 @@ export default async function DashboardPage() {
 				</div>
 
 				<div className="space-y-8">
+					{/* 獲得したバッジ */}
+					<BadgeList userBadges={user?.badges || []} />
+
 					{/* リーダーボード */}
 					<Leaderboard entries={leaderboardEntries} />
 
