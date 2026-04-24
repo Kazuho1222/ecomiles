@@ -2,8 +2,8 @@ import {
 	Bike,
 	Coins,
 	Footprints,
-	IceCream,
 	Leaf,
+	Snowflake,
 	SportShoe,
 	Trees,
 } from "lucide-react";
@@ -92,7 +92,7 @@ export const ShareCard: React.FC<ShareCardProps> = ({ data }) => {
 				<div className="grid grid-cols-2 gap-6">
 					<div className="bg-white/10 backdrop-blur-md p-6 rounded-3xl border border-white/20">
 						<div className="flex items-center gap-3 mb-2 opacity-80">
-							<IceCream size={20} />
+							<Snowflake size={20} />
 							<span className="text-sm font-bold uppercase tracking-wider">
 								Ice Saved
 							</span>

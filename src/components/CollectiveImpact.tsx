@@ -1,4 +1,4 @@
-import { IceCream, Leaf, Trees, Zap } from "lucide-react";
+import { Leaf, Snowflake, Trees, Zap } from "lucide-react";
 
 interface CollectiveImpactProps {
 	data: {
@@ -68,7 +68,7 @@ export const CollectiveImpactDisplay = ({ data }: CollectiveImpactProps) => {
 
 					<div className="flex flex-col items-center lg:items-start">
 						<div className="bg-emerald-800 p-3 rounded-2xl mb-4">
-							<IceCream className="text-cyan-400" />
+							<Snowflake className="text-cyan-400" />
 						</div>
 						<span className="text-emerald-300 text-sm uppercase tracking-wider font-bold mb-1">
 							守った氷

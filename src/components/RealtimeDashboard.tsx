@@ -1,9 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+	Coins,
+	Leaf,
+	Lightbulb,
+	Smartphone,
+	Snowflake,
+	ThermometerSun,
+	Trees,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import EcoMetricCard from "@/components/EcoMetricCard";
-import { ThermometerSun, IceCream, Coins, Leaf, Trees, Smartphone, Lightbulb } from "lucide-react";
 
 interface RealtimeDashboardProps {
 	initialData: {
@@ -17,7 +25,9 @@ interface RealtimeDashboardProps {
 	};
 }
 
-export default function RealtimeDashboard({ initialData }: RealtimeDashboardProps) {
+export default function RealtimeDashboard({
+	initialData,
+}: RealtimeDashboardProps) {
 	const router = useRouter();
 	const [data, setData] = useState(initialData);
 
@@ -62,7 +72,11 @@ export default function RealtimeDashboard({ initialData }: RealtimeDashboardProp
 
 				<EcoMetricCard
 					title="地球の寿命を延ばした"
-					value={data.lifespanExtension < 0.001 ? data.lifespanExtension * 1000000 : data.lifespanExtension}
+					value={
+						data.lifespanExtension < 0.001
+							? data.lifespanExtension * 1000000
+							: data.lifespanExtension
+					}
 					unit={data.lifespanExtension < 0.001 ? "μ秒" : "秒"}
 					precision={data.lifespanExtension < 0.001 ? 2 : 6}
 					icon={<ThermometerSun className="text-orange-600 w-5 h-5" />}
@@ -73,11 +87,11 @@ export default function RealtimeDashboard({ initialData }: RealtimeDashboardProp
 				/>
 
 				<EcoMetricCard
-					title="北極の氷を守った"
+					title="守った氷の量"
 					value={data.iceSaved}
 					unit="kg"
 					precision={2}
-					icon={<IceCream className="text-cyan-600 w-5 h-5" />}
+					icon={<Snowflake className="text-cyan-600 w-5 h-5" />}
 					className="bg-cyan-50 dark:bg-cyan-950/20 border-cyan-200 dark:border-cyan-900 shadow-sm"
 					titleClassName="text-cyan-800 dark:text-cyan-400"
 					valueClassName="text-cyan-900 dark:text-cyan-200"

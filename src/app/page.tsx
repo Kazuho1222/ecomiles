@@ -1,6 +1,6 @@
 import { SignInButton, UserButton } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
-import { IceCream, Leaf } from "lucide-react";
+import { Leaf, Snowflake } from "lucide-react";
 import { redirect } from "next/navigation";
 import { CollectiveImpactDisplay } from "@/components/CollectiveImpact";
 import { ConnectWithStrava, PoweredByStrava } from "@/components/StravaLogo";
@@ -108,7 +108,7 @@ export default async function Home() {
 								</div>
 								<div className="p-10 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm text-left">
 									<div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center mb-6 text-blue-600 dark:text-blue-400">
-										<IceCream size={28} />
+										<Snowflake size={28} />
 									</div>
 									<h4 className="text-2xl font-bold mb-4 italic">
 										エコ・マイルストーン
