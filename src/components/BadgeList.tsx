@@ -88,7 +88,9 @@ export const BadgeList: React.FC<BadgeListProps> = ({ userBadges }) => {
 											? "km"
 											: badge.type === "POINTS"
 												? "pts"
-												: "削減量"}
+												: badge.type === "CO2_SAVED"
+													? "kg CO2削減量"
+													: "回"}
 									</p>
 								)}
 							</div>
