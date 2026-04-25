@@ -43,9 +43,12 @@ export const BadgeList: React.FC<BadgeListProps> = ({ userBadges }) => {
 					return (
 						<motion.div
 							key={badge.id}
+							tabIndex={0}
+							role="group"
+							aria-label={`${badge.name}${isAwarded ? "（獲得済み）" : "（未獲得）"}`}
 							whileHover={isAwarded ? { scale: 1.02, x: 4 } : {}}
 							transition={{ type: "spring", stiffness: 400, damping: 25 }}
-							className={`relative group flex items-center gap-4 p-4 rounded-2xl ${
+							className={`relative group focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 flex items-center gap-4 p-4 rounded-2xl ${
 								isAwarded
 									? "bg-linear-to-br from-amber-50 to-orange-100 dark:from-amber-900/10 dark:to-orange-900/10 border border-amber-200 dark:border-amber-900/30"
 									: "bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 opacity-40 grayscale"
@@ -75,7 +78,7 @@ export const BadgeList: React.FC<BadgeListProps> = ({ userBadges }) => {
 							</div>
 
 							{/* ツールチップ詳細 */}
-							<div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-3 bg-slate-900 text-white text-xs rounded-xl shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 border border-slate-700">
+							<div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-3 bg-slate-900 text-white text-xs rounded-xl shadow-xl opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-events-none transition-opacity z-50 border border-slate-700">
 								<p className="font-bold mb-1">{badge.name}</p>
 								<p className="opacity-80 mb-2">{badge.description}</p>
 								{!isAwarded && (

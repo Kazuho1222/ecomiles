@@ -14,10 +14,10 @@ export const checkAndAwardBadges = async (userId: string) => {
 			points: true,
 			badges: {
 				include: {
-					badge: true
-				}
-			}
-		}
+					badge: true,
+				},
+			},
+		},
 	});
 
 	if (!user) return [];
@@ -28,8 +28,8 @@ export const checkAndAwardBadges = async (userId: string) => {
 	const totalActivities = user.activities.length;
 
 	// 獲得済みのバッジ名リスト
-	const awardedBadgeNames = user.badges.map(ub => ub.badge.name);
-	
+	const awardedBadgeNames = user.badges.map((ub) => ub.badge.name);
+
 	const newlyAwardedBadges = [];
 
 	// 2. 各バッジの条件をチェック
@@ -54,27 +54,32 @@ export const checkAndAwardBadges = async (userId: string) => {
 		}
 
 		if (achieved) {
-			// 3. バッジをDBに登録（マスターがなければ作成）
-			const badge = await prisma.badge.upsert({
-				where: { name: definition.name },
-				update: {},
-				create: {
-					name: definition.name,
-					description: definition.description,
-					type: definition.type,
-					threshold: definition.threshold,
-					// アイコンはEmojiとして名前の前に付けて保存するか、別途管理
-				}
-			});
-
-			await prisma.userBadge.create({
-				data: {
-					userId: user.id,
-					badgeId: badge.id
-				}
-			});
-
-			newlyAwardedBadges.push(definition);
+			// 3. バッジをDBに登録（マスターがなければ作成）+ 付与を冪等に
+			try {
+				await prisma.$transaction(async (tx) => {
+					const badge = await tx.badge.upsert({
+						where: { name: definition.name },
+						update: {},
+						create: {
+							name: definition.name,
+							description: definition.description,
+							type: definition.type,
+							threshold: definition.threshold,
+						},
+					});
+					await tx.userBadge.upsert({
+						where: {
+							userId_badgeId: { userId: user.id, badgeId: badge.id },
+						},
+						update: {},
+						create: { userId: user.id, badgeId: badge.id },
+					});
+				});
+				newlyAwardedBadges.push(definition);
+			} catch (err) {
+				// 並行実行時の一意制約違反は無視
+				console.error("Failed to award badge", definition.name, err);
+			}
 		}
 	}
 

@@ -348,9 +348,13 @@ export const syncActivities = async (userId: string) => {
 		pointsAwardedTotal += pointsToAward;
 	}
 
-	// バッジ獲得をチェック
+	// バッジ獲得をチェック（失敗してもアクティビティ同期結果は返す）
 	if (newActivitiesCount > 0) {
-		await checkAndAwardBadges(userId);
+		try {
+			await checkAndAwardBadges(userId);
+		} catch (badgeError) {
+			console.error("Badge check failed (non-fatal):", badgeError);
+		}
 	}
 
 	return {

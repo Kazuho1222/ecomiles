@@ -80,8 +80,8 @@ model UserBadge {
   id        String   @id @default(uuid())
   userId    String   @map("user_id")
   badgeId   String   @map("badge_id")
-  user      User     @relation(fields: [userId], references: [id])
-  badge     Badge    @relation(fields: [badgeId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge     Badge    @relation(fields: [badgeId], references: [id], onDelete: Restrict)
   awardedAt DateTime @default(now()) @map("awarded_at")
 
   @@unique([userId, badgeId])
