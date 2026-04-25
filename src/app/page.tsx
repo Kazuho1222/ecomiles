@@ -35,7 +35,10 @@ export default async function Home() {
 							<UserButton />
 						) : (
 							<SignInButton mode="modal">
-								<button className="px-6 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full font-bold shadow-sm hover:shadow-md transition-all active:scale-95 cursor-pointer">
+								<button
+									type="button"
+									className="px-6 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full font-bold shadow-sm hover:shadow-md transition-all active:scale-95 cursor-pointer"
+								>
 									ログイン
 								</button>
 							</SignInButton>
