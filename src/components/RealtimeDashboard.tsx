@@ -44,12 +44,6 @@ export default function RealtimeDashboard({
 	selectedMetric,
 }: RealtimeDashboardProps) {
 	const router = useRouter();
-	const [data, setData] = useState(initialData);
-
-	// サーバーサイドからのデータ変更を反映
-	useEffect(() => {
-		setData(initialData);
-	}, [initialData]);
 
 	// 背景での自動更新（ポーリング）
 	useEffect(() => {
@@ -71,7 +65,7 @@ export default function RealtimeDashboard({
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
 				<EcoMetricCard
 					title="獲得ポイント"
-					value={data.totalPoints}
+					value={initialData.totalPoints}
 					unit="pts"
 					icon={<Coins className="text-green-600 w-5 h-5" />}
 					className="bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900 shadow-sm"
@@ -83,7 +77,7 @@ export default function RealtimeDashboard({
 
 				<EcoMetricCard
 					title="CO2削減量"
-					value={data.totalCO2Reduction}
+					value={initialData.totalCO2Reduction}
 					unit="kg"
 					precision={2}
 					icon={<Leaf className="text-emerald-600 w-5 h-5" />}
@@ -97,12 +91,12 @@ export default function RealtimeDashboard({
 				<EcoMetricCard
 					title="地球の寿命を延ばした"
 					value={
-						data.lifespanExtension < 0.001
-							? data.lifespanExtension * 1000000
-							: data.lifespanExtension
+						initialData.lifespanExtension < 0.001
+							? initialData.lifespanExtension * 1000000
+							: initialData.lifespanExtension
 					}
-					unit={data.lifespanExtension < 0.001 ? "μ秒" : "秒"}
-					precision={data.lifespanExtension < 0.001 ? 2 : 6}
+					unit={initialData.lifespanExtension < 0.001 ? "μ秒" : "秒"}
+					precision={initialData.lifespanExtension < 0.001 ? 2 : 6}
 					icon={<ThermometerSun className="text-orange-600 w-5 h-5" />}
 					className="bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-900 shadow-sm"
 					titleClassName="text-orange-800 dark:text-orange-400"
@@ -114,7 +108,7 @@ export default function RealtimeDashboard({
 
 				<EcoMetricCard
 					title="守った氷の量"
-					value={data.iceSaved}
+					value={initialData.iceSaved}
 					unit="kg"
 					precision={2}
 					icon={<Snowflake className="text-cyan-600 w-5 h-5" />}
@@ -130,7 +124,7 @@ export default function RealtimeDashboard({
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
 				<EcoMetricCard
 					title="杉の木に換算"
-					value={data.cedarTrees}
+					value={initialData.cedarTrees}
 					unit="本"
 					precision={4}
 					icon={<Trees className="text-green-700 w-5 h-5" />}
@@ -142,7 +136,7 @@ export default function RealtimeDashboard({
 
 				<EcoMetricCard
 					title="スマホ充電回数"
-					value={data.smartphoneCharges}
+					value={initialData.smartphoneCharges}
 					unit="回"
 					precision={0}
 					icon={<Smartphone className="text-blue-600 w-5 h-5" />}
@@ -154,7 +148,7 @@ export default function RealtimeDashboard({
 
 				<EcoMetricCard
 					title="LED電球点灯時間"
-					value={data.ledBulbHours}
+					value={initialData.ledBulbHours}
 					unit="時間"
 					precision={1}
 					icon={<Lightbulb className="text-yellow-500 w-5 h-5" />}
