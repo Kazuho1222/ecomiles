@@ -5,6 +5,15 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+export function formatDate(date: Date | string) {
+	const d = typeof date === "string" ? new Date(date) : date;
+	return d.toLocaleDateString("ja-JP", {
+		year: "numeric",
+		month: "2-digit",
+		day: "2-digit",
+	});
+}
+
 export function formatActivityDate(date: Date | string) {
 	const d = typeof date === "string" ? new Date(date) : date;
 	const now = new Date();

@@ -1,4 +1,5 @@
 import { ActivityType } from "@prisma/client";
+import { checkAndAwardBadges } from "./badge-service";
 import prisma from "./prisma";
 
 const STRAVA_CLIENT_ID = process.env.STRAVA_CLIENT_ID;
@@ -245,6 +246,9 @@ export const syncSingleActivity = async (
 			},
 		});
 
+		// バッジ獲得をチェック
+		await checkAndAwardBadges(user.id);
+
 		return { success: true, activityId: stravaAct.id };
 	} catch (error) {
 		console.error("Error syncing single activity:", error);
@@ -342,6 +346,15 @@ export const syncActivities = async (userId: string) => {
 		// 簡易的に「処理した」カウントを返す
 		newActivitiesCount++;
 		pointsAwardedTotal += pointsToAward;
+	}
+
+	// バッジ獲得をチェック（失敗してもアクティビティ同期結果は返す）
+	if (newActivitiesCount > 0) {
+		try {
+			await checkAndAwardBadges(userId);
+		} catch (badgeError) {
+			console.error("Badge check failed (non-fatal):", badgeError);
+		}
 	}
 
 	return {

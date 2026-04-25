@@ -2,10 +2,12 @@ import { UserButton } from "@clerk/nextjs";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import type { Activity, Point } from "@prisma/client";
 import { redirect } from "next/navigation";
+import { BadgeList } from "@/components/BadgeList";
 import { DashboardDrilldown } from "@/components/DashboardDrilldown";
 import { Leaderboard } from "@/components/Leaderboard";
 import { ShareModal } from "@/components/ShareModal";
 import { ConnectWithStrava, PoweredByStrava } from "@/components/StravaLogo";
+import { checkAndAwardBadges } from "@/lib/badge-service";
 import {
 	calculateCedarTreeEquivalent,
 	calculateCO2Reduction,
@@ -25,6 +27,13 @@ export default async function DashboardPage() {
 		redirect("/");
 	}
 
+	// ページ表示時にバッジ獲得をチェック
+	try {
+		await checkAndAwardBadges(userId);
+	} catch (error) {
+		console.error("Failed to check badges:", error);
+	}
+
 	const user = await prisma.user.findUnique({
 		where: { id: userId },
 		include: {
@@ -33,6 +42,12 @@ export default async function DashboardPage() {
 			},
 			points: {
 				orderBy: { createdAt: "desc" },
+			},
+			badges: {
+				include: {
+					badge: true,
+				},
+				orderBy: { awardedAt: "desc" },
 			},
 		},
 	});
@@ -132,6 +147,9 @@ export default async function DashboardPage() {
 				</div>
 
 				<div className="space-y-8">
+					{/* 獲得したバッジ */}
+					<BadgeList userBadges={user?.badges || []} />
+
 					{/* リーダーボード */}
 					<Leaderboard entries={leaderboardEntries} />
 

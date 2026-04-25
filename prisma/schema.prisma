@@ -16,17 +16,18 @@ enum ActivityType {
 }
 
 model User {
-  id                  String     @id @default(uuid())
-  email               String     @unique
+  id                  String      @id @default(uuid())
+  email               String      @unique
   name                String?
-  createdAt           DateTime   @default(now())
-  stravaConnected     Boolean    @default(false)
+  createdAt           DateTime    @default(now())
+  stravaConnected     Boolean     @default(false)
   stravaAthleteId     String?
   stravaAccessToken   String?
   stravaRefreshToken  String?
   stravaExpiresAt     DateTime?
   activities          Activity[]
   points              Point[]
+  badges              UserBadge[]
 
   @@map("users")
 }
@@ -61,4 +62,28 @@ model Point {
   createdAt       DateTime  @default(now()) @map("created_at")
 
   @@map("points")
+}
+
+model Badge {
+  id          String      @id @default(uuid())
+  name        String      @unique
+  description String
+  imageUrl    String?     @map("image_url")
+  type        String      // "DISTANCE", "CONTINUITY", "CO2_SAVED", etc.
+  threshold   Float       // 達成条件の数値
+  users       UserBadge[]
+
+  @@map("badges")
+}
+
+model UserBadge {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  badgeId   String   @map("badge_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge     Badge    @relation(fields: [badgeId], references: [id], onDelete: Restrict)
+  awardedAt DateTime @default(now()) @map("awarded_at")
+
+  @@unique([userId, badgeId])
+  @@map("user_badges")
 }
