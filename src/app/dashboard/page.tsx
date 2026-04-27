@@ -154,12 +154,12 @@ export default async function DashboardPage() {
 				}
 			/>
 
-			<footer className="mt-auto flex flex-col items-center gap-4 py-12 border-t border-slate-100 dark:border-slate-800 w-full max-w-5xl">
+			<footer className="mt-auto flex flex-col items-center gap-4 py-16 w-full max-w-5xl">
 				<a
 					href="https://strava.com"
 					target="_blank"
 					rel="noopener noreferrer"
-					className="opacity-60 hover:opacity-100 transition-opacity"
+					className="opacity-40 hover:opacity-100 transition-opacity"
 				>
 					<PoweredByStrava />
 				</a>
