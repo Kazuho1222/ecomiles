@@ -38,120 +38,126 @@ export const ShareCard: React.FC<ShareCardProps> = ({ data }) => {
 			<div className="absolute top-[-100px] right-[-100px] w-80 h-80 bg-white/10 rounded-full blur-3xl" />
 			<div className="absolute bottom-[-50px] left-[-50px] w-60 h-60 bg-emerald-400/20 rounded-full blur-2xl" />
 
-			<div className="flex justify-between items-start z-10">
+			{/* ヘッダー */}
+			<div className="flex justify-between items-start z-10 mb-6">
 				<div>
-					<h1 className="text-6xl font-black tracking-tighter mb-2 italic">
+					<h1 className="text-6xl font-black tracking-tighter mb-1">
 						EcoMiles
 					</h1>
-					<p className="text-xl font-medium opacity-90 uppercase tracking-widest">
-						Your Environmental Impact Report
+					<p className="text-lg font-bold opacity-90 tracking-widest text-emerald-100">
+						環境貢献レポート
 					</p>
 				</div>
-				<div className="bg-white/20 backdrop-blur-md p-5 rounded-3xl border border-white/30 flex items-center gap-5">
+				<div className="bg-white/20 backdrop-blur-md p-4 px-6 rounded-[2rem] border border-white/30 flex items-center gap-4 shadow-xl">
 					{data.avatarUrl ? (
 						<img
 							src={data.avatarUrl}
 							alt={data.userName}
 							crossOrigin="anonymous"
-							className="w-16 h-16 rounded-full border-2 border-white/50 shadow-inner object-cover"
+							className="w-14 h-14 rounded-full border-2 border-emerald-400/50 shadow-inner object-cover"
 						/>
 					) : (
-						<div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center border-2 border-white/50">
-							<span className="text-2xl font-black">{data.userName[0]}</span>
+						<div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center border-2 border-emerald-400/50">
+							<span className="text-xl font-black">{data.userName[0]}</span>
 						</div>
 					)}
 					<div>
-						<p className="text-sm font-bold uppercase tracking-widest opacity-70 mb-0.5">
+						<p className="text-[10px] font-black tracking-[0.2em] opacity-60 mb-0.5 uppercase">
 							Athlete
 						</p>
-						<p className="text-3xl font-black tracking-tight">
+						<p className="text-2xl font-black tracking-tight">
 							{data.userName}
 						</p>
 					</div>
 				</div>
 			</div>
 
-			<div className="grid grid-cols-2 gap-8 z-10">
-				<div className="bg-white/10 backdrop-blur-md p-8 rounded-3xl border border-white/20 flex flex-col justify-center">
-					<div className="flex items-center gap-4 mb-4">
-						<div className="p-3 bg-emerald-400 rounded-xl">
+			{/* メイングリッド */}
+			<div className="grid grid-cols-2 gap-6 z-10 flex-1 items-stretch mb-6">
+				<div className="bg-white/10 backdrop-blur-md p-8 rounded-[2.5rem] border border-white/20 flex flex-col justify-center shadow-inner">
+					<div className="flex items-center gap-3 mb-2">
+						<div className="p-2.5 bg-emerald-400 rounded-xl shadow-lg text-emerald-900">
 							<Leaf size={32} />
 						</div>
-						<span className="text-2xl font-bold uppercase tracking-wide">
-							CO2 Reduced
+						<span className="text-xl font-black tracking-wider">
+							CO2削減量
 						</span>
 					</div>
 					<div className="flex items-baseline gap-3">
-						<span className="text-8xl font-black tracking-tighter">
+						<span className="text-8xl font-black tracking-tighter tabular-nums">
 							{data.totalCO2Reduction.toFixed(2)}
 						</span>
-						<span className="text-4xl font-bold opacity-80">kg</span>
+						<span className="text-4xl font-black opacity-60">kg</span>
 					</div>
 				</div>
 
-				<div className="grid grid-cols-2 gap-6">
-					<div className="bg-white/10 backdrop-blur-md p-6 rounded-3xl border border-white/20">
-						<div className="flex items-center gap-3 mb-2 opacity-80">
+				<div className="grid grid-cols-2 gap-5">
+					<div className="bg-white/10 backdrop-blur-md p-6 rounded-[2rem] border border-white/20 shadow-inner flex flex-col justify-center">
+						<div className="flex items-center gap-2 mb-2 opacity-70">
 							<Snowflake size={20} />
-							<span className="text-sm font-bold uppercase tracking-wider">
-								Ice Saved
+							<span className="text-xs font-black tracking-widest">
+								守った氷
 							</span>
 						</div>
-						<div className="flex items-baseline gap-1">
-							<span className="text-4xl font-black">
+						<div className="flex items-baseline gap-1.5">
+							<span className="text-4xl font-black tabular-nums">
 								{data.iceSaved.toFixed(1)}
 							</span>
-							<span className="text-lg font-bold opacity-70">kg</span>
+							<span className="text-sm font-black opacity-60">kg</span>
 						</div>
 					</div>
 
-					<div className="bg-white/10 backdrop-blur-md p-6 rounded-3xl border border-white/20">
-						<div className="flex items-center gap-3 mb-2 opacity-80">
+					<div className="bg-white/10 backdrop-blur-md p-6 rounded-[2rem] border border-white/20 shadow-inner flex flex-col justify-center">
+						<div className="flex items-center gap-2 mb-2 opacity-70">
 							<Trees size={20} />
-							<span className="text-sm font-bold uppercase tracking-wider">
-								Cedar Trees
+							<span className="text-xs font-black tracking-widest">
+								杉の木換算
 							</span>
 						</div>
-						<div className="flex items-baseline gap-1">
-							<span className="text-4xl font-black">
+						<div className="flex items-baseline gap-1.5">
+							<span className="text-4xl font-black tabular-nums">
 								{data.cedarTrees.toFixed(2)}
 							</span>
-							<span className="text-lg font-bold opacity-70">trees/yr</span>
+							<span className="text-sm font-black opacity-60">本</span>
 						</div>
 					</div>
 
-					<div className="bg-white/10 backdrop-blur-md p-6 rounded-3xl border border-white/20 col-span-2 flex items-center justify-between">
+					<div className="bg-white/10 backdrop-blur-md p-6 px-8 rounded-[2rem] border border-white/20 col-span-2 flex items-center justify-between shadow-inner">
 						<div>
-							<div className="flex items-center gap-3 mb-1 opacity-80">
+							<div className="flex items-center gap-2 mb-1 opacity-70">
 								<Coins size={20} />
-								<span className="text-sm font-bold uppercase tracking-wider">
-									Total Points
+								<span className="text-xs font-black tracking-widest">
+									累計獲得ポイント
 								</span>
 							</div>
-							<span className="text-5xl font-black tracking-tighter">
-								{data.totalPoints}
-							</span>
+							<div className="flex items-baseline gap-2">
+								<span className="text-5xl font-black tracking-tighter tabular-nums">
+									{data.totalPoints.toLocaleString()}
+								</span>
+								<span className="text-lg font-black opacity-60">pts</span>
+							</div>
 						</div>
-						<div className="flex gap-4 opacity-40">
-							<Bike size={40} />
-							<Footprints size={40} />
-							<SportShoe size={40} />
+						<div className="flex gap-5 opacity-20">
+							<Bike size={48} />
+							<Footprints size={48} />
+							<SportShoe size={48} />
 						</div>
 					</div>
 				</div>
 			</div>
 
-			<div className="flex justify-between items-end z-10 border-t border-white/20 pt-8">
-				<div className="flex flex-col gap-1">
-					<p className="text-sm font-bold opacity-60">Join the movement at</p>
-					<p className="text-2xl font-black tracking-tight">
+			{/* フッター */}
+			<div className="flex justify-between items-end z-10 border-t border-white/20 pt-6">
+				<div className="flex flex-col gap-0.5">
+					<p className="text-[10px] font-black opacity-40 tracking-[0.2em]">一緒に始めよう</p>
+					<p className="text-xl font-black tracking-tight text-emerald-200/80">
 						ecomiles-omega.vercel.app
 					</p>
 				</div>
 				<div className="flex flex-col items-end gap-2">
-					<p className="text-xs font-bold opacity-50">Powered by</p>
-					<div className="bg-white p-2 rounded-lg">
-						<StravaLogo color="#FC5200" width={100} />
+					<p className="text-[9px] font-black opacity-40 tracking-[0.3em] uppercase">Powered by</p>
+					<div className="bg-white p-1.5 px-3 rounded-xl shadow-lg">
+						<StravaLogo color="#FC5200" width={90} />
 					</div>
 				</div>
 			</div>
