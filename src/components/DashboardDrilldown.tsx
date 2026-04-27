@@ -110,7 +110,7 @@ export const DashboardDrilldown: React.FC<DashboardDrilldownProps> = ({
 								<div className="p-3 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
 									{getMetricIcon(selectedMetric)}
 								</div>
-								<h2 className="text-2xl font-black italic tracking-tight">
+								<h2 className="text-2xl font-black tracking-tight">
 									{getMetricTitle(selectedMetric)}
 								</h2>
 							</div>
@@ -226,7 +226,7 @@ export const DashboardDrilldown: React.FC<DashboardDrilldownProps> = ({
 															{formatActivityDate(activity.activityDate)}
 														</td>
 														<td className="px-8 py-5 whitespace-nowrap text-sm">
-															<div className="flex items-center gap-2 font-black italic">
+															<div className="flex items-center gap-2 font-black">
 																{activity.activityType === "Ride" && (
 																	<Bike className="w-4 h-4 text-orange-500" />
 																)}
@@ -284,7 +284,7 @@ export const DashboardDrilldown: React.FC<DashboardDrilldownProps> = ({
 							</div>
 						) : (
 							<div className="p-20 text-center bg-white dark:bg-slate-900 rounded-[2.5rem] border-2 border-dashed border-slate-100 dark:border-slate-800 shadow-sm">
-								<p className="text-slate-400 font-bold italic">
+								<p className="text-slate-400 font-bold">
 									履歴データがありません。アクティビティを同期してください。
 								</p>
 							</div>

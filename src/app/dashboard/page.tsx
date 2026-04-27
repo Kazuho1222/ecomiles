@@ -93,7 +93,7 @@ export default async function DashboardPage() {
 		<main className="flex min-h-screen flex-col items-center p-6 lg:p-12 bg-slate-50 dark:bg-black">
 			<div className="z-10 max-w-5xl w-full flex flex-col md:flex-row items-center justify-between mb-12 gap-6">
 				<div className="flex flex-col items-center md:items-start">
-					<h1 className="text-4xl font-black text-emerald-600 dark:text-emerald-500 tracking-tighter italic">
+					<h1 className="text-4xl font-black text-emerald-600 dark:text-emerald-500 tracking-tighter">
 						EcoMiles
 					</h1>
 					<p className="text-slate-400 font-bold text-xs uppercase tracking-[0.3em] mt-1">
