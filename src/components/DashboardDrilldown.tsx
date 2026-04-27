@@ -42,14 +42,37 @@ interface DashboardDrilldownProps {
 
 export const DashboardDrilldown: React.FC<DashboardDrilldownProps> = ({
 	dashboardData,
-	activities,
+	activities: initialActivities,
 	stravaConnected,
 	sidebar,
 }) => {
 	const [selectedMetric, setSelectedMetric] = useState<MetricType>("co2");
 	const [isExpanded, setIsExpanded] = useState(false);
+	const [activities, setActivities] = useState<Activity[]>(initialActivities);
+	const [isLoadingMore, setIsLoadingMore] = useState(false);
+	const [hasMore, setHasMore] = useState(initialActivities.length >= 20);
 
 	const displayedActivities = isExpanded ? activities : activities.slice(0, 5);
+
+	const loadMore = async () => {
+		setIsLoadingMore(true);
+		try {
+			const response = await fetch(
+				`/api/activities?skip=${activities.length}&take=20`,
+			);
+			if (response.ok) {
+				const newActivities: Activity[] = await response.json();
+				if (newActivities.length < 20) {
+					setHasMore(false);
+				}
+				setActivities((prev) => [...prev, ...newActivities]);
+			}
+		} catch (error) {
+			console.error("Failed to load more activities:", error);
+		} finally {
+			setIsLoadingMore(false);
+		}
+	};
 
 	const getMetricTitle = (metric: MetricType) => {
 		switch (metric) {
@@ -269,16 +292,36 @@ export const DashboardDrilldown: React.FC<DashboardDrilldownProps> = ({
 								</div>
 
 								{activities.length > 5 && (
-									<div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-t border-gray-100 dark:border-slate-800 flex justify-center">
-										<button
-											type="button"
-											onClick={() => setIsExpanded(!isExpanded)}
-											className="px-6 py-2 text-xs font-black text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 transition-all tracking-widest"
-										>
-											{isExpanded
-												? "表示を減らす"
-												: `すべての履歴を表示 (${activities.length}件)`}
-										</button>
+									<div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-t border-gray-100 dark:border-slate-800 flex flex-col items-center gap-4">
+										{!isExpanded ? (
+											<button
+												type="button"
+												onClick={() => setIsExpanded(true)}
+												className="px-6 py-2 text-xs font-black text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 transition-all tracking-widest"
+											>
+												表示履歴を増やす
+											</button>
+										) : (
+											<>
+												{hasMore && (
+													<button
+														type="button"
+														onClick={loadMore}
+														disabled={isLoadingMore}
+														className="px-6 py-2 text-xs font-black text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 transition-all tracking-widest flex items-center gap-2"
+													>
+														{isLoadingMore ? "読み込み中..." : "さらに過去の履歴を読み込む"}
+													</button>
+												)}
+												<button
+													type="button"
+													onClick={() => setIsExpanded(false)}
+													className="px-6 py-2 text-[10px] font-bold text-slate-400 hover:text-slate-600 transition-all tracking-widest"
+												>
+													表示を減らす
+												</button>
+											</>
+										)}
 									</div>
 								)}
 							</div>
