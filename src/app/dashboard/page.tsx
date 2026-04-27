@@ -3,6 +3,7 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import type { Activity, Point } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { BadgeList } from "@/components/BadgeList";
+import { CollectiveImpactCard } from "@/components/CollectiveImpact";
 import { DashboardDrilldown } from "@/components/DashboardDrilldown";
 import { Leaderboard } from "@/components/Leaderboard";
 import { ShareModal } from "@/components/ShareModal";
@@ -17,7 +18,7 @@ import {
 	calculateSmartphoneCharges,
 } from "@/lib/eco-utils";
 import prisma from "@/lib/prisma";
-import { getLeaderboard } from "@/lib/stats";
+import { getCollectiveImpact, getLeaderboard } from "@/lib/stats";
 
 export default async function DashboardPage() {
 	const { userId } = await auth();
@@ -54,6 +55,7 @@ export default async function DashboardPage() {
 	});
 
 	const leaderboardEntries = await getLeaderboard(5);
+	const collectiveImpact = await getCollectiveImpact();
 
 	const totalPoints =
 		user?.points.reduce((sum: number, p: Point) => sum + p.points, 0) || 0;
@@ -111,7 +113,7 @@ export default async function DashboardPage() {
 							{user?.name || clerkUser?.firstName || "アスリート"}
 						</p>
 					</div>
-					<div className="h-8 w-[1px] bg-slate-100 dark:bg-slate-800" />
+					<div className="h-8 w-px bg-slate-100 dark:bg-slate-800" />
 					<div className="flex items-center gap-3">
 						<ShareModal data={shareData} variant="compact" />
 						{user?.stravaConnected && (
@@ -137,13 +139,18 @@ export default async function DashboardPage() {
 			<DashboardDrilldown
 				dashboardData={dashboardData}
 				activities={user?.activities || []}
-				points={user?.points || []}
 				stravaConnected={!!user?.stravaConnected}
-				sidebar={
-					<>
-						<BadgeList userBadges={user?.badges || []} />
-						<Leaderboard entries={leaderboardEntries} />
-					</>
+				key={user?.id}
+				sidebarTop={<BadgeList key="badges" userBadges={user?.badges || []} />}
+				wideContent={
+					<CollectiveImpactCard
+						key="impact"
+						data={collectiveImpact}
+						userCO2Reduction={totalCO2Reduction}
+					/>
+				}
+				sidebarBottom={
+					<Leaderboard key="leaderboard" entries={leaderboardEntries} />
 				}
 			/>
 
