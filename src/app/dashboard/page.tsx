@@ -113,7 +113,7 @@ export default async function DashboardPage() {
 							{user?.name || clerkUser?.firstName || "アスリート"}
 						</p>
 					</div>
-					<div className="h-8 w-[1px] bg-slate-100 dark:bg-slate-800" />
+					<div className="h-8 w-px bg-slate-100 dark:bg-slate-800" />
 					<div className="flex items-center gap-3">
 						<ShareModal data={shareData} variant="compact" />
 						{user?.stravaConnected && (
@@ -139,16 +139,17 @@ export default async function DashboardPage() {
 			<DashboardDrilldown
 				dashboardData={dashboardData}
 				activities={user?.activities || []}
-				points={user?.points || []}
 				stravaConnected={!!user?.stravaConnected}
-				sidebarTop={<BadgeList userBadges={user?.badges || []} />}
+				key={user?.id}
+				sidebarTop={<BadgeList key="badges" userBadges={user?.badges || []} />}
 				wideContent={
 					<CollectiveImpactCard
+						key="impact"
 						data={collectiveImpact}
 						userCO2Reduction={totalCO2Reduction}
 					/>
 				}
-				sidebarBottom={<Leaderboard entries={leaderboardEntries} />}
+				sidebarBottom={<Leaderboard key="leaderboard" entries={leaderboardEntries} />}
 			/>
 
 			<footer className="mt-auto flex flex-col items-center gap-4 py-12 border-t border-slate-100 dark:border-slate-800 w-full max-w-5xl">

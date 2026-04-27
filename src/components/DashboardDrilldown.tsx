@@ -1,6 +1,6 @@
 "use client";
 
-import type { Activity, Point } from "@prisma/client";
+import type { Activity } from "@prisma/client";
 import {
 	Bike,
 	Coins,
@@ -35,7 +35,6 @@ import { SyncButton } from "./SyncButton";
 interface DashboardDrilldownProps {
 	dashboardData: DashboardData;
 	activities: Activity[];
-	points: Point[];
 	stravaConnected: boolean;
 	sidebarTop?: React.ReactNode;
 	sidebarBottom?: React.ReactNode;
@@ -211,9 +210,9 @@ export const DashboardDrilldown: React.FC<DashboardDrilldownProps> = ({
 															const lifespan =
 																calculateEarthLifespanExtension(co2);
 															if (lifespan < 0.001) {
-																contributionValue = (lifespan * 1000000).toFixed(
-																	1,
-																);
+																contributionValue = (
+																	lifespan * 1000000
+																).toFixed(1);
 																contributionUnit = "μ秒";
 															} else {
 																contributionValue = lifespan.toFixed(4);
@@ -356,4 +355,3 @@ export const DashboardDrilldown: React.FC<DashboardDrilldownProps> = ({
 		</div>
 	);
 };
-

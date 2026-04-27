@@ -7,16 +7,17 @@ interface CollectiveImpactProps {
 		iceSaved: number;
 		cedarTrees: number;
 	};
-	userCO2Reduction: number;
+	userCO2Reduction?: number;
 }
 
 export const CollectiveImpactCard = ({
 	data,
 	userCO2Reduction,
 }: CollectiveImpactProps) => {
-	// 自分の貢献割合を計算（最大でも視覚的に意味のある数値にする）
+	// 自分の貢献割合を計算
+	const hasUserContribution = typeof userCO2Reduction === "number";
 	const contributionPercentage =
-		data.totalCO2Reduction > 0
+		hasUserContribution && data.totalCO2Reduction > 0
 			? Math.min((userCO2Reduction / data.totalCO2Reduction) * 100, 100)
 			: 0;
 
@@ -97,57 +98,62 @@ export const CollectiveImpactCard = ({
 				</div>
 
 				{/* 右側: あなたの貢献度グラフ */}
-				<div className="flex flex-col items-center bg-emerald-950/20 p-8 rounded-[2.5rem] border border-white/10 backdrop-blur-sm min-w-[240px]">
-					<div className="relative w-32 h-32 mb-6">
-						{/* 背景の円 */}
-						<svg className="w-full h-full transform -rotate-90">
-							<circle
-								cx="64"
-								cy="64"
-								r={radius}
-								stroke="currentColor"
-								strokeWidth="8"
-								fill="transparent"
-								className="text-white/10"
-							/>
-							{/* プログレス円 */}
-							<circle
-								cx="64"
-								cy="64"
-								r={radius}
-								stroke="currentColor"
-								strokeWidth="8"
-								fill="transparent"
-								strokeDasharray={circumference}
-								strokeDashoffset={offset}
-								strokeLinecap="round"
-								className="text-white transition-all duration-1000 ease-out"
-							/>
-						</svg>
-						<div className="absolute inset-0 flex flex-col items-center justify-center">
-							<span className="text-2xl font-black leading-none">
-								{contributionPercentage < 0.1 && contributionPercentage > 0
-									? "< 0.1"
-									: contributionPercentage.toFixed(1)}
-								<small className="text-[10px] ml-0.5">%</small>
-							</span>
+				{hasUserContribution && (
+					<div className="flex flex-col items-center bg-emerald-950/20 p-8 rounded-[2.5rem] border border-white/10 backdrop-blur-sm min-w-[240px]">
+						<div className="relative w-32 h-32 mb-6">
+							{/* 背景の円 */}
+							<svg className="w-full h-full transform -rotate-90">
+								<circle
+									cx="64"
+									cy="64"
+									r={radius}
+									stroke="currentColor"
+									strokeWidth="8"
+									fill="transparent"
+									className="text-white/10"
+								/>
+								{/* プログレス円 */}
+								<circle
+									cx="64"
+									cy="64"
+									r={radius}
+									stroke="currentColor"
+									strokeWidth="8"
+									fill="transparent"
+									strokeDasharray={circumference}
+									strokeDashoffset={offset}
+									strokeLinecap="round"
+									className="text-white transition-all duration-1000 ease-out"
+								/>
+							</svg>
+							<div className="absolute inset-0 flex flex-col items-center justify-center">
+								<span className="text-2xl font-black leading-none">
+									{contributionPercentage < 0.1 && contributionPercentage > 0
+										? "< 0.1"
+										: contributionPercentage.toFixed(1)}
+									<small className="text-[10px] ml-0.5">%</small>
+								</span>
+							</div>
+						</div>
+						<div className="text-center">
+							<h3 className="text-sm font-black mb-1">あなたの寄与度</h3>
+							<p className="text-[10px] text-emerald-100/60 font-bold leading-relaxed">
+								全体のCO2削減量に対する
+								<br />
+								あなたの貢献割合です
+							</p>
 						</div>
 					</div>
-					<div className="text-center">
-						<h3 className="text-sm font-black mb-1">あなたの寄与度</h3>
-						<p className="text-[10px] text-emerald-100/60 font-bold leading-relaxed">
-							全体のCO2削減量に対する
-							<br />
-							あなたの貢献割合です
-						</p>
-					</div>
-				</div>
+				)}
 			</div>
 		</div>
 	);
 };
 
-export const CollectiveImpactDisplay = ({ data }: CollectiveImpactProps) => {
+export const CollectiveImpactDisplay = ({
+	data,
+	userCO2Reduction,
+}: CollectiveImpactProps) => {
 	return (
 		<div className="w-full py-12 bg-emerald-900 text-emerald-50 rounded-3xl overflow-hidden relative shadow-2xl mb-16">
 			<div className="absolute top-0 right-0 p-8 opacity-10">
@@ -169,7 +175,7 @@ export const CollectiveImpactDisplay = ({ data }: CollectiveImpactProps) => {
 						<div className="bg-emerald-800 p-3 rounded-2xl mb-4">
 							<Zap className="text-yellow-400" />
 						</div>
-						<span className="text-emerald-300 text-sm uppercase tracking-wider font-bold mb-1">
+						<span className="text-emerald-300 text-sm tracking-wider font-bold mb-1">
 							活動件数
 						</span>
 						<span className="text-3xl font-black">
@@ -182,7 +188,7 @@ export const CollectiveImpactDisplay = ({ data }: CollectiveImpactProps) => {
 						<div className="bg-emerald-800 p-3 rounded-2xl mb-4">
 							<Leaf className="text-emerald-400" />
 						</div>
-						<span className="text-emerald-300 text-sm uppercase tracking-wider font-bold mb-1">
+						<span className="text-emerald-300 text-sm tracking-wider font-bold mb-1">
 							CO2削減量
 						</span>
 						<span className="text-3xl font-black">
@@ -195,7 +201,7 @@ export const CollectiveImpactDisplay = ({ data }: CollectiveImpactProps) => {
 						<div className="bg-emerald-800 p-3 rounded-2xl mb-4">
 							<Trees className="text-green-400" />
 						</div>
-						<span className="text-emerald-300 text-sm uppercase tracking-wider font-bold mb-1">
+						<span className="text-emerald-300 text-sm tracking-wider font-bold mb-1">
 							杉の木換算
 						</span>
 						<span className="text-3xl font-black">
@@ -208,7 +214,7 @@ export const CollectiveImpactDisplay = ({ data }: CollectiveImpactProps) => {
 						<div className="bg-emerald-800 p-3 rounded-2xl mb-4">
 							<Snowflake className="text-cyan-400" />
 						</div>
-						<span className="text-emerald-300 text-sm uppercase tracking-wider font-bold mb-1">
+						<span className="text-emerald-300 text-sm tracking-wider font-bold mb-1">
 							守った氷
 						</span>
 						<span className="text-3xl font-black">
