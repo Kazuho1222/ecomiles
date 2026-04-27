@@ -73,3 +73,31 @@ export const getLeaderboard = async (limit = 5) => {
 
 	return leaderboard;
 };
+
+export const getActivityCalendarStats = async (userId: string) => {
+	const sixMonthsAgo = new Date();
+	sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+	sixMonthsAgo.setHours(0, 0, 0, 0);
+
+	const activities = await prisma.activity.findMany({
+		where: {
+			userId,
+			activityDate: {
+				gte: sixMonthsAgo,
+			},
+		},
+		select: {
+			activityDate: true,
+			distance: true,
+		},
+	});
+
+	// 日付ごとの距離をグループ化
+	const stats: Record<string, number> = {};
+	for (const activity of activities) {
+		const dateKey = activity.activityDate.toISOString().split("T")[0];
+		stats[dateKey] = (stats[dateKey] || 0) + activity.distance;
+	}
+
+	return stats;
+};
