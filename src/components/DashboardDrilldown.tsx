@@ -256,9 +256,9 @@ export const DashboardDrilldown: React.FC<DashboardDrilldownProps> = ({
 																href={`https://www.strava.com/activities/${activity.stravaActivityId}`}
 																target="_blank"
 																rel="noopener noreferrer"
-																className="text-[#FC5200] hover:underline font-black text-[10px] uppercase"
+																className="text-[#FC5200] hover:underline font-black text-[10px]"
 															>
-																View
+																詳細
 															</a>
 														</td>
 													</tr>

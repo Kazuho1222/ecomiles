@@ -96,27 +96,28 @@ export default async function DashboardPage() {
 					<h1 className="text-4xl font-black text-emerald-600 dark:text-emerald-500 tracking-tighter">
 						EcoMiles
 					</h1>
-					<p className="text-slate-400 font-bold text-xs uppercase tracking-[0.3em] mt-1">
-						Athlete Dashboard
+					<p className="text-slate-400 font-bold text-xs tracking-[0.3em] mt-1">
+						アスリート・ダッシュボード
 					</p>
 				</div>
 
 				<div className="flex items-center gap-6 bg-white dark:bg-slate-900 p-2 pl-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
 					<div className="flex flex-col items-end">
-						<p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+						<p className="text-[10px] font-black text-slate-400 tracking-widest">
 							おかえりなさい
 						</p>
 						<p className="text-sm font-black text-slate-900 dark:text-slate-100">
-							{user?.name || clerkUser?.firstName || "Athlete"}
+							{user?.name || clerkUser?.firstName || "アスリート"}
 						</p>
 					</div>
-					<div className="h-8 w-px bg-slate-100 dark:bg-slate-800" />
+					<div className="h-8 w-[1px] bg-slate-100 dark:bg-slate-800" />
 					<div className="flex items-center gap-3">
+						<ShareModal data={shareData} variant="compact" />
 						{user?.stravaConnected && (
 							<div className="flex items-center gap-2 px-3 py-1 bg-orange-50 dark:bg-orange-950/30 rounded-full border border-orange-100 dark:border-orange-900">
 								<StravaSymbol color="#FC5200" size={14} />
-								<span className="text-[10px] font-black text-orange-600 dark:text-orange-400 uppercase tracking-wider">
-									Connected
+								<span className="text-[10px] font-black text-orange-600 dark:text-orange-400 tracking-wider">
+									Strava連携済み
 								</span>
 							</div>
 						)}
@@ -129,10 +130,6 @@ export default async function DashboardPage() {
 						/>
 					</div>
 				</div>
-			</div>
-
-			<div className="w-full max-w-5xl flex justify-end mb-8">
-				<ShareModal data={shareData} />
 			</div>
 
 			{/* メインコンテンツ: 履歴・統計 & サイドバー */}

@@ -16,9 +16,13 @@ interface ShareModalProps {
 		userName: string;
 		avatarUrl?: string;
 	};
+	variant?: "default" | "compact";
 }
 
-export const ShareModal: React.FC<ShareModalProps> = ({ data }) => {
+export const ShareModal: React.FC<ShareModalProps> = ({
+	data,
+	variant = "default",
+}) => {
 	const [isOpen, setIsOpen] = useState(false);
 	const [isGenerating, setIsGenerating] = useState(false);
 	const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -49,7 +53,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ data }) => {
 
 	const downloadImage = () => {
 		if (!previewUrl) return;
-		
+
 		const now = new Date();
 		const year = now.getFullYear();
 		const month = String(now.getMonth() + 1).padStart(2, "0");
@@ -57,9 +61,9 @@ export const ShareModal: React.FC<ShareModalProps> = ({ data }) => {
 		const hours = String(now.getHours()).padStart(2, "0");
 		const minutes = String(now.getMinutes()).padStart(2, "0");
 		const seconds = String(now.getSeconds()).padStart(2, "0");
-		
+
 		const timestamp = `${year}${month}${day}-${hours}${minutes}${seconds}`;
-		
+
 		const link = document.createElement("a");
 		link.download = `ecomiles-impact-${timestamp}.png`;
 		link.href = previewUrl;
@@ -73,13 +77,24 @@ export const ShareModal: React.FC<ShareModalProps> = ({ data }) => {
 
 	return (
 		<>
-			<Button
-				onClick={handleOpen}
-				className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-full px-6 py-6 shadow-lg transition-all hover:scale-105 active:scale-95"
-			>
-				<Share size={20} />
-				SNSでシェアする
-			</Button>
+			{variant === "default" ? (
+				<Button
+					onClick={handleOpen}
+					className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-full px-6 py-6 shadow-lg transition-all hover:scale-105 active:scale-95"
+				>
+					<Share size={20} />
+					SNSでシェアする
+				</Button>
+			) : (
+				<button
+					type="button"
+					onClick={handleOpen}
+					className="flex items-center gap-2 p-2 px-3 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 font-black text-[10px] tracking-wider rounded-xl border border-emerald-100 dark:border-emerald-900 transition-all hover:bg-emerald-100 dark:hover:bg-emerald-900/50"
+				>
+					<Share size={14} />
+					<span className="hidden sm:inline">貢献をシェア</span>
+				</button>
+			)}
 
 			{/* 実際のレンダリング用（画面外に配置） */}
 			<div className="fixed top-[-9999px] left-[-9999px] pointer-events-none">
