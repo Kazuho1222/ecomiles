@@ -134,7 +134,7 @@ export const CollectiveImpactCard = ({
 								/>
 							</svg>
 							<div className="absolute inset-0 flex flex-col items-center justify-center">
-								<span className="text-2xl font-black leading-none">
+								<span className="text-xl font-black leading-none">
 									{contributionPercentage < 0.1 && contributionPercentage > 0
 										? "< 0.1"
 										: contributionPercentage.toFixed(1)}
