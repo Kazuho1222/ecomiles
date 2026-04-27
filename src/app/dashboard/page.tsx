@@ -3,6 +3,7 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import type { Activity, Point } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { BadgeList } from "@/components/BadgeList";
+import { CollectiveImpactCard } from "@/components/CollectiveImpact";
 import { DashboardDrilldown } from "@/components/DashboardDrilldown";
 import { Leaderboard } from "@/components/Leaderboard";
 import { ShareModal } from "@/components/ShareModal";
@@ -17,7 +18,7 @@ import {
 	calculateSmartphoneCharges,
 } from "@/lib/eco-utils";
 import prisma from "@/lib/prisma";
-import { getLeaderboard } from "@/lib/stats";
+import { getCollectiveImpact, getLeaderboard } from "@/lib/stats";
 
 export default async function DashboardPage() {
 	const { userId } = await auth();
@@ -54,6 +55,7 @@ export default async function DashboardPage() {
 	});
 
 	const leaderboardEntries = await getLeaderboard(5);
+	const collectiveImpact = await getCollectiveImpact();
 
 	const totalPoints =
 		user?.points.reduce((sum: number, p: Point) => sum + p.points, 0) || 0;
@@ -139,12 +141,14 @@ export default async function DashboardPage() {
 				activities={user?.activities || []}
 				points={user?.points || []}
 				stravaConnected={!!user?.stravaConnected}
-				sidebar={
-					<>
-						<BadgeList userBadges={user?.badges || []} />
-						<Leaderboard entries={leaderboardEntries} />
-					</>
+				sidebarTop={<BadgeList userBadges={user?.badges || []} />}
+				wideContent={
+					<CollectiveImpactCard
+						data={collectiveImpact}
+						userCO2Reduction={totalCO2Reduction}
+					/>
 				}
+				sidebarBottom={<Leaderboard entries={leaderboardEntries} />}
 			/>
 
 			<footer className="mt-auto flex flex-col items-center gap-4 py-12 border-t border-slate-100 dark:border-slate-800 w-full max-w-5xl">
