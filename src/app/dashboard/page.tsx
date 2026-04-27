@@ -104,13 +104,13 @@ export default async function DashboardPage() {
 				<div className="flex items-center gap-6 bg-white dark:bg-slate-900 p-2 pl-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
 					<div className="flex flex-col items-end">
 						<p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-							Welcome back
+							おかえりなさい
 						</p>
 						<p className="text-sm font-black text-slate-900 dark:text-slate-100">
 							{user?.name || clerkUser?.firstName || "Athlete"}
 						</p>
 					</div>
-					<div className="h-8 w-[1px] bg-slate-100 dark:bg-slate-800" />
+					<div className="h-8 w-px bg-slate-100 dark:bg-slate-800" />
 					<div className="flex items-center gap-3">
 						{user?.stravaConnected && (
 							<div className="flex items-center gap-2 px-3 py-1 bg-orange-50 dark:bg-orange-950/30 rounded-full border border-orange-100 dark:border-orange-900">

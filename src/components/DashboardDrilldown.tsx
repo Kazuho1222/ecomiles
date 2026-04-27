@@ -144,21 +144,21 @@ export const DashboardDrilldown: React.FC<DashboardDrilldownProps> = ({
 									<table className="min-w-full divide-y divide-gray-100 dark:divide-slate-800 text-left">
 										<thead className="bg-slate-50 dark:bg-slate-800/50">
 											<tr>
-												<th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+												<th className="px-8 py-5 text-[10px] font-black text-slate-400 tracking-[0.2em]">
 													日付
 												</th>
-												<th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+												<th className="px-8 py-5 text-[10px] font-black text-slate-400 tracking-[0.2em]">
 													タイプ
 												</th>
-												<th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-right">
+												<th className="px-8 py-5 text-[10px] font-black text-slate-400 tracking-[0.2em] text-right">
 													距離
 												</th>
-												<th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-right">
+												<th className="px-8 py-5 text-[10px] font-black text-slate-400 tracking-[0.2em] text-right">
 													{selectedMetric === "points"
 														? "獲得ポイント"
 														: "貢献値"}
 												</th>
-												<th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-right">
+												<th className="px-8 py-5 text-[10px] font-black text-slate-400 tracking-[0.2em] text-right">
 													詳細
 												</th>
 											</tr>
@@ -256,7 +256,7 @@ export const DashboardDrilldown: React.FC<DashboardDrilldownProps> = ({
 																href={`https://www.strava.com/activities/${activity.stravaActivityId}`}
 																target="_blank"
 																rel="noopener noreferrer"
-																className="text-[#FC5200] hover:underline font-black text-[10px] uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity"
+																className="text-[#FC5200] hover:underline font-black text-[10px] uppercase"
 															>
 																View
 															</a>
@@ -273,7 +273,7 @@ export const DashboardDrilldown: React.FC<DashboardDrilldownProps> = ({
 										<button
 											type="button"
 											onClick={() => setIsExpanded(!isExpanded)}
-											className="px-6 py-2 text-xs font-black text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 transition-all uppercase tracking-widest"
+											className="px-6 py-2 text-xs font-black text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 transition-all tracking-widest"
 										>
 											{isExpanded
 												? "表示を減らす"
