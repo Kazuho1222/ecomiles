@@ -149,7 +149,9 @@ export default async function DashboardPage() {
 						userCO2Reduction={totalCO2Reduction}
 					/>
 				}
-				sidebarBottom={<Leaderboard key="leaderboard" entries={leaderboardEntries} />}
+				sidebarBottom={
+					<Leaderboard key="leaderboard" entries={leaderboardEntries} />
+				}
 			/>
 
 			<footer className="mt-auto flex flex-col items-center gap-4 py-12 border-t border-slate-100 dark:border-slate-800 w-full max-w-5xl">
