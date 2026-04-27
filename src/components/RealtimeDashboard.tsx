@@ -45,13 +45,28 @@ export default function RealtimeDashboard({
 }: RealtimeDashboardProps) {
 	const router = useRouter();
 
-	// 背景での自動更新（ポーリング）
+	// 背景での自動更新（ポーリング & 可視性チェック）
 	useEffect(() => {
-		const interval = setInterval(() => {
-			router.refresh();
-		}, 30000); // 30秒ごとに更新チェック
+		const handleVisibilityChange = () => {
+			if (document.visibilityState === "visible") {
+				router.refresh();
+			}
+		};
 
-		return () => clearInterval(interval);
+		// 1分ごとに定期更新（表示中のみ）
+		const interval = setInterval(() => {
+			if (document.visibilityState === "visible") {
+				router.refresh();
+			}
+		}, 60000);
+
+		// タブの切り替えを監視
+		document.addEventListener("visibilitychange", handleVisibilityChange);
+
+		return () => {
+			clearInterval(interval);
+			document.removeEventListener("visibilitychange", handleVisibilityChange);
+		};
 	}, [router]);
 
 	const handleMetricClick = (metric: MetricType) => {
