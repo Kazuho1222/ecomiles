@@ -39,6 +39,7 @@ export default async function DashboardPage() {
 		include: {
 			activities: {
 				orderBy: { activityDate: "desc" },
+				take: 20,
 			},
 			points: {
 				orderBy: { createdAt: "desc" },
