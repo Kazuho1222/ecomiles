@@ -102,7 +102,14 @@ export const CollectiveImpactCard = ({
 					<div className="flex flex-col items-center bg-emerald-950/20 p-8 rounded-[2.5rem] border border-white/10 backdrop-blur-sm min-w-[240px]">
 						<div className="relative w-32 h-32 mb-6">
 							{/* 背景の円 */}
-							<svg className="w-full h-full transform -rotate-90">
+							<svg
+								className="w-full h-full transform -rotate-90"
+								role="img"
+								aria-labelledby="contribution-chart-title"
+							>
+								<title id="contribution-chart-title">
+									あなたの寄与度チャート
+								</title>
 								<circle
 									cx="64"
 									cy="64"
