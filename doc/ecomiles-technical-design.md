@@ -9,7 +9,7 @@ EcoMilesは、環境に優しい移動手段（サイクリング、ウォーキ
 ### フロントエンド
 - **フレームワーク**: Next.js (App Router)
 - **UI**: React + TypeScript
-- **スタイリング**: Tailwind CSS
+- **スタイリング**: Tailwind CSS (Lucide-react, Framer Motion)
 - **UIコンポーネント**: shadcn/ui
 
 ### バックエンド
@@ -20,376 +20,141 @@ EcoMilesは、環境に優しい移動手段（サイクリング、ウォーキ
 
 ### インフラ
 - **ホスティング**: Vercel
-- **ストレージ**: Supabase Storage
-- **CI/CD**: Vercel自動デプロイ
+- **CI/CD**: GitHub連携によるVercel自動デプロイ
 
 ### 外部API連携
-- **アクティビティデータ**: Strava API
-- **広告**: Google AdSense（または適切な広告プラットフォーム）
+- **アクティビティデータ**: Strava API (OAuth 2.0)
 
 ## 3. システムアーキテクチャ
 
 ### 3.1 全体構成図
 
 ```
-[ユーザー] ← → [Webブラウザ] ← → [Vercel (Next.js)] ← → [Supabase (Auth/DB)]
+[ユーザー] ← → [Webブラウザ] ← → [Vercel (Next.js)] ← → [Supabase (DB)]
                                   ↑             ↓
-                                  ↑      [外部API連携]
-                                  ↑         ↙
-                          [Strava API]   [広告API]
+                                  ↑      [外部認証/API]
+                                  ↑      ↙          ↘
+                          [Strava API]        [Clerk Auth]
 ```
 
 ### 3.2 データベース設計
 
-#### ユーザーテーブル
-```
-users
-- id: UUID (PK)
-- email: String (unique)
-- name: String
-- created_at: DateTime
-- strava_connected: Boolean
-- strava_athlete_id: String
-- strava_access_token: String
-- strava_refresh_token: String
-- strava_expires_at: DateTime
-```
-
-#### アクティビティテーブル
-```
-activities
-- id: UUID (PK)
-- user_id: UUID (FK -> users.id)
-- strava_activity_id: String
-- activity_type: Enum (Ride, Run, Walk)
-- distance: Float (km単位)
-- start_location
-- end_location
-- eligible_for_points: Boolean
-- points_awarded: Integer
-- created_at: DateTime
-- activity_date: DateTime
+#### ユーザーテーブル (`users`)
+```prisma
+model User {
+  id                  String      @id
+  email               String      @unique
+  name                String?
+  createdAt           DateTime    @default(now())
+  stravaConnected     Boolean     @default(false)
+  stravaAthleteId     String?
+  stravaAccessToken   String?
+  stravaRefreshToken  String?
+  stravaExpiresAt     DateTime?
+  activities          Activity[]
+  points              Point[]
+  badges              UserBadge[]
+}
 ```
 
-#### ポイントテーブル
+#### アクティビティテーブル (`activities`)
+```prisma
+model Activity {
+  id                 String       @id @default(uuid())
+  userId             String
+  stravaActivityId   String       @unique
+  activityType       ActivityType // Enum: Ride, Run, Walk
+  distance           Float        // km
+  eligibleForPoints  Boolean      @default(true)
+  pointsAwarded      Int          @default(0)
+  createdAt          DateTime     @default(now())
+  activityDate       DateTime     // アクティビティ開始時刻 (UTC)
+}
 ```
-points
-- id: UUID (PK)
-- user_id: UUID (FK -> users.id)
-- activity_id: UUID (FK -> activities.id, nullable)
-- points: Integer
-- description: String
-- transaction_type（Earnedのみ）
-- created_at: DateTime
+
+#### ポイントテーブル (`points`)
+```prisma
+model Point {
+  id              String    @id @default(uuid())
+  userId          String
+  activityId      String?
+  points          Int
+  description     String
+  transactionType String    @default("Earned")
+  createdAt       DateTime  @default(now())
+}
 ```
 
 ## 4. 主要機能の実装詳細
 
-### 4.1 Strava連携
-
-#### OAuth認証フロー
-1. ユーザーがStravaへの連携を要求
-2. Stravaの認証画面にリダイレクト
-3. 認証後、コールバックURLで認可コードを受け取る
-4. 認可コードを使ってアクセストークンとリフレッシュトークンを取得
-5. トークン情報をデータベースに保存
-
-#### トークン更新処理
-- Cron Jobを使用し、期限切れ間近のトークンを自動更新
-- Next.jsのAPIルートを活用したバッチ処理の実装
-
-#### APIリクエスト制限対策
-- レート制限を考慮したリクエストキューの実装
-- キャッシュ戦略の導入
-
+### 4.1 タイムゾーン対応
+サーバーサイドでのデータ集計（YYYY-MM-DD形式のキー生成）およびフロントエンドでの表示において、一貫して `Asia/Tokyo` タイムゾーンを使用する。
 ```typescript
-// トークン更新処理の例
-async function refreshStravaToken(userId: string) {
-  const user = await prisma.user.findUnique({ where: { id: userId } });
-  
-  if (!user || !user.strava_refresh_token) return null;
-  
-  const response = await fetch('https://www.strava.com/oauth/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      client_id: process.env.STRAVA_CLIENT_ID,
-      client_secret: process.env.STRAVA_CLIENT_SECRET,
-      grant_type: 'refresh_token',
-      refresh_token: user.strava_refresh_token
-    })
-  });
-  
-  const data = await response.json();
-  
-  await prisma.user.update({
-    where: { id: userId },
-    data: {
-      strava_access_token: data.access_token,
-      strava_refresh_token: data.refresh_token,
-      strava_expires_at: new Date(Date.now() + data.expires_in * 1000)
-    }
-  });
-  
-  return data.access_token;
-}
+const dateKey = activity.activityDate.toLocaleDateString("sv-SE", {
+  timeZone: "Asia/Tokyo",
+});
 ```
 
 ### 4.2 ポイント計算・付与システム
 
-#### アクティビティ同期処理
-1. 定期的な（または手動トリガーによる）Stravaからの新規アクティビティ取得
-2. ポイント付与条件を満たすか確認（距離、活動タイプなど）
-3. ポイントを計算し、データベースに記録
+#### 計算ロジック
+- **ウォーキング**: 1km = 1.0pt
+- **ランニング**: 1km = 1.5pt
+- **自転車**: 1km = 0.5pt
+- **上限**: 1アクティビティあたり最大100pt
 
 ```typescript
-async function syncActivitiesAndAwardPoints(userId: string) {
-  const user = await prisma.user.findUnique({ 
-    where: { id: userId } 
-  });
-  
-  if (!user || !user.strava_access_token) return null;
-  
-  // 最後に同期したアクティビティの日時を取得
-  const lastActivity = await prisma.activity.findFirst({
-    where: { user_id: userId },
-    orderBy: { activity_date: 'desc' }
-  });
-  
-  // Stravaから新しいアクティビティを取得
-  const activities = await fetchStravaActivities(
-    user.strava_access_token, 
-    lastActivity?.activity_date
-  );
-  
-  for (const activity of activities) {
-    // ポイント付与条件の確認
-    const eligibleForPoints =
-      ['Run', 'Ride', 'Walk'].includes(activity.type);
-    
-    // 距離に基づくポイント計算（1km = 1ポイント）
-    const distanceKm = activity.distance / 1000; // メートルからキロメートルに変換
-    const pointsAwarded = eligibleForPoints ? Math.floor(distanceKm) : 0;
-    
-    // アクティビティをDBに保存
-    const savedActivity = await prisma.activity.create({
-      data: {
-        user_id: userId,
-        strava_activity_id: activity.id.toString(),
-        activity_type: activity.type,
-        distance: distanceKm,
-        start_location: {
-          latitude: activity.start_latlng[0],
-          longitude: activity.start_latlng[1]
-        },
-        end_location: {
-          latitude: activity.end_latlng[0],
-          longitude: activity.end_latlng[1]
-        },
-        starts_from_home: startsFromHome,
-        ends_at_home: endsAtHome,
-        eligible_for_points: eligibleForPoints,
-        points_awarded: pointsAwarded,
-        activity_date: new Date(activity.start_date)
-      }
-    });
-    
-    // ポイントを付与
-    if (pointsAwarded > 0) {
-      await prisma.points.create({
-        data: {
-          user_id: userId,
-          activity_id: savedActivity.id,
-          points: pointsAwarded,
-          description: `${activity.type} - ${distanceKm.toFixed(2)}km`,
-          transaction_type: 'Earned'
-        }
-      });
-    }
+export const calculatePoints = (type: ActivityType, distanceInMeters: number): number => {
+  const distanceKm = distanceInMeters / 1000;
+  let multiplier = 0;
+  switch (type) {
+    case ActivityType.Run: multiplier = 1.5; break;
+    case ActivityType.Walk: multiplier = 1.0; break;
+    case ActivityType.Ride: multiplier = 0.5; break;
   }
-}
+  const points = Math.floor(distanceKm * multiplier);
+  return Math.min(points, 100);
+};
 ```
 
-### 4.4 不正検出システム
+### 4.3 デモモードの実装
+新規ユーザーが即座に機能を体験できるよう、過去180日分のダミーデータを生成するエンドポイント `/api/demo/seed` を提供。
+- **データ隔離**: デモ用の `stravaActivityId` には `demo-` プレフィックスを付与。
+- **集計除外**: グローバル統計（Collective Impact）およびリーダーボードのクエリでは、`demo-` プレフィックスを持つデータを除外。
 
-#### 異常検出ロジック
-- 移動速度の異常値検出
-- 同一ルートの繰り返し検出
-- 短時間での複数アクティビティの検出
+### 4.4 統計データの取得
 
-```typescript
-function detectAnomalousActivity(activity, userHistory) {
-  const speedKmPerHour = activity.distance / (activity.moving_time / 3600);
-  const activityType = activity.type;
-  
-  // 活動タイプ別の速度閾値（km/h）
-  const speedThresholds = {
-    'Run': 25,  // マラソン世界記録の約2倍
-    'Ride': 100, // プロサイクリストの最高速度を超える値
-    'Walk': 10   // 速歩よりかなり速い
-  };
-  
-  // 速度の異常検出
-  if (speedKmPerHour > speedThresholds[activityType]) {
-    return {
-      suspicious: true,
-      reason: `Unusually high speed: ${speedKmPerHour.toFixed(1)} km/h for ${activityType}`
-    };
-  }
-  
-  // その他の不正検出ロジック
-  // ...
-  
-  return { suspicious: false };
-}
+#### みんなの貢献 (Collective Impact)
+本物のデータのみを集計。
+```prisma
+const stats = await prisma.activity.aggregate({
+  where: { NOT: { stravaActivityId: { startsWith: "demo-" } } },
+  _sum: { distance: true },
+  _count: { id: true }
+});
 ```
 
-### 4.5 アクティビティ履歴のページネーション
-
-ユーザーのアクティビティ数が増加してもパフォーマンスを維持するため、20件ずつの追加読み込み（Cursor-basedまたはOffset-based）を実装。
-
-- **Endpoint**: `GET /api/activities`
-- **Query Parameters**:
-  - `skip`: スキップする件数 (default: 0)
-  - `take`: 取得する件数 (default: 20)
-- **Response**: `Activity[]` (JSON形式)
+#### リーダーボード
+デモ活動によるポイントを除外してユーザーごとに集計。
 
 ## 5. UI/UX設計
 
-### 5.1 画面構成
+### 5.1 画面構成 (2カラムレイアウト)
+- **ダッシュボード**
+  - **リアルタイムメトリクス**: 4枚の主要カード + 3枚の補足カード。
+  - **メインコンテンツ (2/3)**: アクティビティ履歴（フィルタリング、ページネーション対応）、アクティビティ・カレンダー、みんなの貢献。
+  - **サイドバー (1/3)**: 獲得バッジ一覧、リーダーボード。
+  - **デモバナー**: デモデータ保持時に表示。Strava連携への誘導を含む。
 
-#### 主要画面
-1. **ダッシュボード (メイン画面)**
-   - **上部**: リアルタイムメトリクス（獲得ポイント、CO2削減量、地球寿命延長など）
-   - **左カラム (2/3)**: アクティビティ履歴（最新5件 → もっと見るで20件ずつ追加表示）
-   - **右カラム (1/3)**: サイドバー（獲得バッジ一覧、リーダーボード）
-   - **ヘッダー**: ユーザー挨拶、Strava連携バッジ、SNSシェアボタン、ユーザー設定
+### 5.2 アニメーション
+- `framer-motion` を使用し、ツールチップのフェード、数字のカウントアップ、ページ遷移などを実装。
 
-2. **プロフィール設定**
-   - 個人情報管理
-   - Strava連携管理
+## 6. セキュリティ対策
+- **Clerk連携**: `auth()` を使用したリクエスト保護。
+- **Strava OAuth**: リフレッシュトークンによる自動更新。
+- **環境変数**: `DATABASE_URL`, `STRAVA_CLIENT_ID`, `CLERK_SECRET_KEY` 等の安全な管理。
 
-### 5.2 レスポンシブデザイン
-
-- **モバイル**: 1カラム構成に自動調整、シェアボタンのラベル非表示化など
-- **デスクトップ**: 2カラム構成、リッチなホバーエフェクトの導入
-- Tailwind CSSによるデバイス最適化
-
-## 6. デプロイメント・運用
-
-### 6.1 デプロイメントパイプライン
-
-- GitHub連携によるVercel自動デプロイ
-- ステージング環境と本番環境の分離
-- 環境変数による設定管理
-
-### 6.2 モニタリング・ロギング
-
-- Vercelのビルトインモニタリング
-- アプリケーションログの集中管理
-- エラー検知と自動通知
-
-### 6.3 バックアップ戦略
-
-- Supabaseによる自動バックアップ
-- 定期的なデータエクスポート
-
-## 7. セキュリティ対策
-
-### 7.1 認証・認可
-
-- Clerkによる安全な認証システム
-- RBAC（Role-Based Access Control）の実装
-- CSRFトークンによる保護
-
-### 7.2 データ保護
-
-- センシティブデータの暗号化
-- HTTPSによる通信暗号化
-- 個人情報の最小限収集
-
-### 7.3 API セキュリティ
-
-- レート制限の実装
-- 適切なCORS設定
-- API鍵の安全な管理
-
-## 8. 収益モデル実装（広告）
-
-- 非侵襲的な広告配置
-- コンテンツとの関連性を考慮した広告表示
-- アドブロック検出と代替コンテンツ表示
-
-```typescript
-// アドブロック検出の例
-function detectAdBlocker() {
-  return new Promise((resolve) => {
-    let adBlockDetected = false;
-    const testAd = document.createElement('div');
-    testAd.innerHTML = '&nbsp;';
-    testAd.className = 'adsbox';
-    document.body.appendChild(testAd);
-    
-    window.setTimeout(() => {
-      if (testAd.offsetHeight === 0) {
-        adBlockDetected = true;
-      }
-      testAd.remove();
-      resolve(adBlockDetected);
-    }, 100);
-  });
-}
-
-// 使用例
-useEffect(() => {
-  async function checkAdBlocker() {
-    const isBlocking = await detectAdBlocker();
-    if (isBlocking) {
-      // アドブロックが検出された場合の処理
-      setShowAdBlockMessage(true);
-    }
-  }
-  
-  checkAdBlocker();
-}, []);
-```
-
-## 9. 拡張・将来計画
-
-### 9.1 技術的拡張性
-
-- マイクロサービスへの移行準備
-- APIゲートウェイの設計
-- サードパーティ統合のための拡張ポイント
-
-### 9.2 機能拡張ロードマップ
-
-- 環境貢献度のより高度な可視化
-- チーム・コミュニティ機能
-- 地域特化型キャンペーン
-- AIによる活動分析と提案
-
-## 10. リスク管理・コンプライアンス
-
-### 10.1 利用規約・プライバシーポリシー
-
-- 明確なサービス利用条件の定義
-- 個人情報取り扱いの透明性確保
-- ポイント制度変更に関する条項
-
-### 10.2 法規制対応
-
-- 個人情報保護法への対応
-- 特定商取引法への対応（必要に応じて）
-- 景品表示法への対応
-
-## 11. 初期リリース範囲
-
-- Strava連携基本機能
-- ポイント付与機能
-- 基本的なダッシュボード
-- 最小限の広告実装
-
----
-
-この設計書は開発の初期段階におけるガイドラインであり、開発進行に伴い適宜更新・調整を行う。
+## 7. 拡張・将来計画
+- **シェアカードの画像化**: 現在はDOMでの表示のみ。Canvas等を使用した画像生成と直接シェア機能の追加。
+- **ストリーク判定**: カレンダーの連続性をサーバーサイドで判定し、バッジを付与するロジックの追加。
+- **地図表示**: アクティビティごとの経路表示（プライバシーに配慮した簡略化版）。
