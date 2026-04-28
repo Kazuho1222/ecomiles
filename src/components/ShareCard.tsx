@@ -29,7 +29,7 @@ export const ShareCard: React.FC<ShareCardProps> = ({ data }) => {
 	return (
 		<div
 			id="share-card"
-			className="w-[1200px] h-[630px] p-12 flex flex-col justify-between text-white font-sans relative overflow-hidden"
+			className="w-[1200px] h-[630px] p-16 flex flex-col justify-start text-white font-sans relative overflow-hidden"
 			style={{
 				background: `linear-gradient(135deg, #059669 0%, #0d9488 50%, #0891b2 100%)`,
 			}}
@@ -39,16 +39,16 @@ export const ShareCard: React.FC<ShareCardProps> = ({ data }) => {
 			<div className="absolute bottom-[-50px] left-[-50px] w-60 h-60 bg-emerald-400/20 rounded-full blur-2xl" />
 
 			{/* ヘッダー */}
-			<div className="flex justify-between items-start z-10 mb-6">
+			<div className="flex justify-between items-center z-10 mb-14">
 				<div>
-					<h1 className="text-6xl font-black tracking-tighter mb-1">
+					<h1 className="text-7xl font-black tracking-tighter mb-1">
 						EcoMiles
 					</h1>
-					<p className="text-lg font-bold opacity-90 tracking-widest text-emerald-100">
+					<p className="text-xl font-bold opacity-90 tracking-widest text-emerald-100">
 						環境貢献レポート
 					</p>
 				</div>
-				<div className="bg-white/20 backdrop-blur-md p-4 px-6 rounded-[2rem] border border-white/30 flex items-center gap-4 shadow-xl">
+				<div className="bg-white/20 backdrop-blur-md p-4 px-6 rounded-[2rem] border border-white/30 flex items-center gap-4">
 					{data.avatarUrl ? (
 						<img
 							src={data.avatarUrl}
@@ -73,10 +73,10 @@ export const ShareCard: React.FC<ShareCardProps> = ({ data }) => {
 			</div>
 
 			{/* メイングリッド */}
-			<div className="grid grid-cols-2 gap-6 z-10 flex-1 items-stretch mb-6">
+			<div className="grid grid-cols-2 gap-6 z-10 items-stretch mb-10">
 				<div className="bg-white/10 backdrop-blur-md p-8 rounded-[2.5rem] border border-white/20 flex flex-col justify-center shadow-inner">
 					<div className="flex items-center gap-3 mb-2">
-						<div className="p-2.5 bg-emerald-400 rounded-xl shadow-lg text-emerald-900">
+						<div className="p-2.5 bg-emerald-400 rounded-xl text-emerald-900">
 							<Leaf size={32} />
 						</div>
 						<span className="text-xl font-black tracking-wider">
@@ -147,7 +147,7 @@ export const ShareCard: React.FC<ShareCardProps> = ({ data }) => {
 			</div>
 
 			{/* フッター */}
-			<div className="flex justify-between items-end z-10 border-t border-white/20 pt-6">
+			<div className="mt-auto flex justify-between items-end z-10 border-t border-white/20 pt-6">
 				<div className="flex flex-col gap-0.5">
 					<p className="text-[10px] font-black opacity-40 tracking-[0.2em]">一緒に始めよう</p>
 					<p className="text-xl font-black tracking-tight text-emerald-200/80">

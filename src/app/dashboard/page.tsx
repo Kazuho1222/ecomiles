@@ -2,6 +2,7 @@ import { UserButton } from "@clerk/nextjs";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import type { Activity, Point } from "@prisma/client";
 import { redirect } from "next/navigation";
+import { ActivityCalendar } from "@/components/ActivityCalendar";
 import { BadgeList } from "@/components/BadgeList";
 import { CollectiveImpactCard } from "@/components/CollectiveImpact";
 import { DashboardDrilldown } from "@/components/DashboardDrilldown";
@@ -18,7 +19,11 @@ import {
 	calculateSmartphoneCharges,
 } from "@/lib/eco-utils";
 import prisma from "@/lib/prisma";
-import { getCollectiveImpact, getLeaderboard } from "@/lib/stats";
+import {
+	getActivityCalendarStats,
+	getCollectiveImpact,
+	getLeaderboard,
+} from "@/lib/stats";
 
 export default async function DashboardPage() {
 	const { userId } = await auth();
@@ -56,6 +61,7 @@ export default async function DashboardPage() {
 
 	const leaderboardEntries = await getLeaderboard(5);
 	const collectiveImpact = await getCollectiveImpact();
+	const calendarStats = await getActivityCalendarStats(userId);
 
 	const totalPoints =
 		user?.points.reduce((sum: number, p: Point) => sum + p.points, 0) || 0;
@@ -143,11 +149,14 @@ export default async function DashboardPage() {
 				key={user?.id}
 				sidebarTop={<BadgeList key="badges" userBadges={user?.badges || []} />}
 				wideContent={
-					<CollectiveImpactCard
-						key="impact"
-						data={collectiveImpact}
-						userCO2Reduction={totalCO2Reduction}
-					/>
+					<div className="space-y-12">
+						<ActivityCalendar key="calendar" stats={calendarStats} />
+						<CollectiveImpactCard
+							key="impact"
+							data={collectiveImpact}
+							userCO2Reduction={totalCO2Reduction}
+						/>
+					</div>
 				}
 				sidebarBottom={
 					<Leaderboard key="leaderboard" entries={leaderboardEntries} />
