@@ -89,14 +89,24 @@ export const getActivityCalendarStats = async (userId: string) => {
 		select: {
 			activityDate: true,
 			distance: true,
+			activityType: true,
 		},
 	});
 
-	// 日付ごとの距離をグループ化
-	const stats: Record<string, number> = {};
+	// 日付ごとの統計を集計
+	const stats: Record<string, { total: number; types: Record<string, number> }> =
+		{};
+
 	for (const activity of activities) {
-		const dateKey = activity.activityDate.toISOString().split("T")[0];
-		stats[dateKey] = (stats[dateKey] || 0) + activity.distance;
+		const dateKey = `${activity.activityDate.getFullYear()}-${String(activity.activityDate.getMonth() + 1).padStart(2, "0")}-${String(activity.activityDate.getDate()).padStart(2, "0")}`;
+
+		if (!stats[dateKey]) {
+			stats[dateKey] = { total: 0, types: {} };
+		}
+
+		stats[dateKey].total += activity.distance;
+		stats[dateKey].types[activity.activityType] =
+			(stats[dateKey].types[activity.activityType] || 0) + activity.distance;
 	}
 
 	return stats;
