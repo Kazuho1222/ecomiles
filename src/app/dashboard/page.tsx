@@ -98,8 +98,36 @@ export default async function DashboardPage() {
 		avatarUrl: clerkUser?.imageUrl,
 	};
 
+	const isDemoMode = user?.activities.some((a) =>
+		a.stravaActivityId.startsWith("demo-"),
+	);
+
 	return (
 		<main className="flex min-h-screen flex-col items-center p-6 lg:p-12 bg-slate-50 dark:bg-black">
+			{isDemoMode && (
+				<div className="w-full max-w-5xl mb-8 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 rounded-2xl p-4 flex items-center justify-between gap-4">
+					<div className="flex items-center gap-3">
+						<div className="p-2 bg-amber-100 dark:bg-amber-900/40 rounded-xl text-amber-600 dark:text-amber-400">
+							<span className="text-lg">💡</span>
+						</div>
+						<div>
+							<p className="text-sm font-black text-amber-900 dark:text-amber-200 tracking-tight">
+								現在はデモモードで表示しています
+							</p>
+							<p className="text-[10px] font-bold text-amber-700 dark:text-amber-400">
+								実際のアクティビティを同期するには Strava と連携してください。
+							</p>
+						</div>
+					</div>
+					<a
+						href="/api/strava/auth"
+						className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-black rounded-xl transition-all shadow-sm"
+					>
+						Stravaと連携
+					</a>
+				</div>
+			)}
+
 			<div className="z-10 max-w-5xl w-full flex flex-col md:flex-row items-center justify-between mb-12 gap-6">
 				<div className="flex flex-col items-center md:items-start">
 					<h1 className="text-4xl font-black text-emerald-600 dark:text-emerald-500 tracking-tighter">

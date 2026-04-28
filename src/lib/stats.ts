@@ -8,6 +8,13 @@ import prisma from "./prisma";
 
 export const getCollectiveImpact = async () => {
 	const stats = await prisma.activity.aggregate({
+		where: {
+			NOT: {
+				stravaActivityId: {
+					startsWith: "demo-",
+				},
+			},
+		},
 		_sum: {
 			distance: true,
 		},
@@ -32,8 +39,16 @@ export const getCollectiveImpact = async () => {
 
 export const getLeaderboard = async (limit = 5) => {
 	// 1. ポイントテーブルでユーザーごとに合計ポイントを集計し、降順でソートして制限件数分取得
+	// デモ活動によるポイントを除外
 	const pointAggregates = await prisma.point.groupBy({
 		by: ["userId"],
+		where: {
+			NOT: {
+				description: {
+					contains: "Demo Activity",
+				},
+			},
+		},
 		_sum: {
 			points: true,
 		},
