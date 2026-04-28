@@ -157,8 +157,8 @@ export const ActivityCalendar: React.FC<ActivityCalendarProps> = ({
 											const dayKey = day
 												? day.key
 												: `empty-day-${weekKey}-${dayIndex}`;
-											
-											const ariaLabel = day 
+
+											const ariaLabel = day
 												? `${day.date.toLocaleDateString("ja-JP", { month: "short", day: "numeric" })}: ${day.distance.toFixed(1)}km`
 												: undefined;
 
