@@ -11,6 +11,12 @@ const STRAVA_REDIRECT_URI =
 		? "http://localhost:3000/api/strava/callback"
 		: process.env.STRAVA_REDIRECT_URI;
 
+if (!STRAVA_CLIENT_ID || !STRAVA_CLIENT_SECRET) {
+	throw new Error(
+		"STRAVA_CLIENT_ID and STRAVA_CLIENT_SECRET environment variables are required",
+	);
+}
+
 if (!STRAVA_REDIRECT_URI) {
 	throw new Error(
 		"STRAVA_REDIRECT_URI environment variable is required in production",
@@ -19,8 +25,8 @@ if (!STRAVA_REDIRECT_URI) {
 
 export const getStravaAuthUrl = () => {
 	const params = new URLSearchParams({
-		client_id: STRAVA_CLIENT_ID!,
-		redirect_uri: STRAVA_REDIRECT_URI!,
+		client_id: STRAVA_CLIENT_ID,
+		redirect_uri: STRAVA_REDIRECT_URI,
 		response_type: "code",
 		approval_prompt: "auto",
 		scope: "read,activity:read_all",
