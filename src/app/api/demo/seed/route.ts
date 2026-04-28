@@ -12,32 +12,51 @@ export async function POST() {
 
 	try {
 		// 1. ユーザーをDBに作成/取得
-		const user = await prisma.user.upsert({
+		await prisma.user.upsert({
 			where: { id: userId },
 			update: {},
 			create: {
 				id: userId,
 				email: `${userId}@example.com`,
 				name: "Demo Athlete",
-				stravaConnected: false, // 連携はさせない
+				stravaConnected: false,
 			},
 		});
 
-		// 2. 既存のアクティビティがあるかチェック（二重生成防止）
-		const existingCount = await prisma.activity.count({
+		// 2. 既存のアクティビティの状態をチェック
+		const activities = await prisma.activity.findMany({
 			where: { userId },
+			select: { stravaActivityId: true },
 		});
 
-		if (existingCount > 0) {
+		const hasRealActivities = activities.some(
+			(a) => !a.stravaActivityId.startsWith("demo-"),
+		);
+		const hasDemoActivities = activities.some((a) =>
+			a.stravaActivityId.startsWith("demo-"),
+		);
+
+		// 本物のアクティビティがある場合は、データを混ぜないように拒否
+		if (hasRealActivities) {
+			return NextResponse.json(
+				{
+					success: false,
+					message: "Cannot seed demo data into an account with real activities.",
+				},
+				{ status: 400 },
+			);
+		}
+
+		// 既にデモデータがある場合は、重複して作らない
+		if (hasDemoActivities) {
 			return NextResponse.json({
 				success: true,
-				message: "Already has demo data",
+				message: "Already in demo mode.",
 			});
 		}
 
-		// 3. 過去180日分のアクティビティを生成 (ランダムに40-60件程度)
-		const activities = [];
-		const _points = [];
+		// 3. 過去180日分のアクティビティを生成
+		const newActivities = [];
 		const now = new Date();
 
 		for (let i = 0; i < 180; i++) {
@@ -46,33 +65,28 @@ export async function POST() {
 
 			const date = new Date(now);
 			date.setDate(date.getDate() - i);
-
-			// 修正したカレンダーのテスト用に、あえて深夜〜早朝の時間帯も混ぜる
-			date.setHours(
-				Math.floor(Math.random() * 24),
-				Math.floor(Math.random() * 60),
-			);
+			
+			date.setHours(Math.floor(Math.random() * 24), Math.floor(Math.random() * 60));
 
 			const types = [ActivityType.Run, ActivityType.Ride, ActivityType.Walk];
 			const type = types[Math.floor(Math.random() * types.length)];
-
-			// タイプに応じた現実的な距離
+			
 			let distance = 0;
 			let multiplier = 0;
 			if (type === ActivityType.Run) {
-				distance = Math.random() * 8 + 3; // 3-11km
+				distance = Math.random() * 8 + 3;
 				multiplier = 1.5;
 			} else if (type === ActivityType.Ride) {
-				distance = Math.random() * 30 + 10; // 10-40km
+				distance = Math.random() * 30 + 10;
 				multiplier = 0.5;
 			} else {
-				distance = Math.random() * 5 + 1; // 1-6km
+				distance = Math.random() * 5 + 1;
 				multiplier = 1.0;
 			}
 
 			const pointsAwarded = Math.floor(distance * multiplier);
 
-			activities.push({
+			newActivities.push({
 				userId,
 				stravaActivityId: `demo-${userId}-${i}`,
 				activityType: type,
@@ -84,28 +98,25 @@ export async function POST() {
 
 		// 一括登録 (transaction)
 		await prisma.$transaction(async (tx) => {
-			for (const act of activities) {
+			for (const act of newActivities) {
 				await tx.activity.create({
 					data: {
 						...act,
-						points:
-							act.pointsAwarded > 0
-								? {
-										create: {
-											userId,
-											points: act.pointsAwarded,
-											description: `Demo Activity: ${act.activityType}`,
-										},
-									}
-								: undefined,
-					},
+						points: act.pointsAwarded > 0 ? {
+							create: {
+								userId,
+								points: act.pointsAwarded,
+								description: `Demo Activity: ${act.activityType}`,
+							}
+						} : undefined,
+					}
 				});
 			}
 		});
 
 		return NextResponse.json({
 			success: true,
-			count: activities.length,
+			count: newActivities.length,
 		});
 	} catch (error) {
 		console.error("Demo seed error:", error);
