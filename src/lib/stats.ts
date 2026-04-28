@@ -98,7 +98,10 @@ export const getActivityCalendarStats = async (userId: string) => {
 		{};
 
 	for (const activity of activities) {
-		const dateKey = `${activity.activityDate.getFullYear()}-${String(activity.activityDate.getMonth() + 1).padStart(2, "0")}-${String(activity.activityDate.getDate()).padStart(2, "0")}`;
+		// 日本時間基準でYYYY-MM-DD形式のキーを生成
+		const dateKey = activity.activityDate.toLocaleDateString("sv-SE", {
+			timeZone: "Asia/Tokyo",
+		});
 
 		if (!stats[dateKey]) {
 			stats[dateKey] = { total: 0, types: {} };

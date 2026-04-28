@@ -30,7 +30,10 @@ export const ActivityCalendar: React.FC<ActivityCalendarProps> = ({
 		for (let i = 181; i >= 0; i--) {
 			const d = new Date(today);
 			d.setDate(d.getDate() - i);
-			const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+			// サーバー側と一致させるため、JST基準でYYYY-MM-DD形式のキーを生成
+			const dateKey = d.toLocaleDateString("sv-SE", {
+				timeZone: "Asia/Tokyo",
+			});
 			const dayStats = stats[dateKey] || { total: 0, types: {} };
 			result.push({
 				date: d,
@@ -86,6 +89,7 @@ export const ActivityCalendar: React.FC<ActivityCalendarProps> = ({
 					labels.push({
 						label: firstDayOfWeek.date.toLocaleDateString("ja-JP", {
 							month: "short",
+							timeZone: "Asia/Tokyo",
 						}),
 						index: i,
 					});
@@ -219,6 +223,7 @@ export const ActivityCalendar: React.FC<ActivityCalendarProps> = ({
 										month: "short",
 										day: "numeric",
 										weekday: "short",
+										timeZone: "Asia/Tokyo",
 									})}
 								</span>
 								<span className="text-base font-black">
