@@ -77,6 +77,31 @@ export const DashboardDrilldown: React.FC<DashboardDrilldownProps> = ({
 		}
 	};
 
+	const [isSeeding, setIsSeeding] = useState(false);
+	const handleDemoSeed = async () => {
+		if (
+			!confirm(
+				"デモデータを生成してダッシュボードの機能を確認しますか？\n(過去180日分のダミーアクティビティが追加されます)",
+			)
+		)
+			return;
+
+		setIsSeeding(true);
+		try {
+			const response = await fetch("/api/demo/seed", { method: "POST" });
+			if (response.ok) {
+				window.location.reload();
+			} else {
+				alert("デモデータの生成に失敗しました。");
+			}
+		} catch (error) {
+			console.error("Demo seed error:", error);
+			alert("エラーが発生しました。");
+		} finally {
+			setIsSeeding(false);
+		}
+	};
+
 	const getMetricTitle = (metric: MetricType) => {
 		switch (metric) {
 			case "points":
@@ -165,6 +190,15 @@ export const DashboardDrilldown: React.FC<DashboardDrilldownProps> = ({
 										<StravaSymbol color="white" size={24} />
 										Stravaと連携
 									</a>
+
+									<button
+										type="button"
+										onClick={handleDemoSeed}
+										disabled={isSeeding}
+										className="text-orange-600 dark:text-orange-400 font-bold text-xs hover:underline decoration-2 underline-offset-4 disabled:opacity-50"
+									>
+										{isSeeding ? "生成中..." : "または、デモモードで機能を試す"}
+									</button>
 								</div>
 							) : activities.length > 0 ? (
 								<div className="overflow-hidden border rounded-[2.5rem] shadow-sm bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 transition-all hover:shadow-md">
