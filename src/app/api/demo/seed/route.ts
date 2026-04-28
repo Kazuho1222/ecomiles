@@ -11,18 +11,15 @@ export async function POST() {
 	}
 
 	try {
-		// 1. ユーザーをDBに作成/取得 (Clerkのログイン直後はDBにいない可能性があるため)
-		// 本来はWebhookなどで作成するのが理想ですが、デモ用なのでここでupsertします
+		// 1. ユーザーをDBに作成/取得
 		const user = await prisma.user.upsert({
 			where: { id: userId },
-			update: {
-				stravaConnected: true, // デモモードとして連携済み扱いにする
-			},
+			update: {},
 			create: {
 				id: userId,
-				email: `${userId}@example.com`, // ダミーメール
+				email: `${userId}@example.com`,
 				name: "Demo Athlete",
-				stravaConnected: true,
+				stravaConnected: false, // 連携はさせない
 			},
 		});
 
@@ -31,7 +28,7 @@ export async function POST() {
 			where: { userId },
 		});
 
-		if (existingCount > 10) {
+		if (existingCount > 0) {
 			return NextResponse.json({
 				success: true,
 				message: "Already has demo data",
@@ -40,7 +37,7 @@ export async function POST() {
 
 		// 3. 過去180日分のアクティビティを生成 (ランダムに40-60件程度)
 		const activities = [];
-		const points = [];
+		const _points = [];
 		const now = new Date();
 
 		for (let i = 0; i < 180; i++) {
@@ -49,13 +46,16 @@ export async function POST() {
 
 			const date = new Date(now);
 			date.setDate(date.getDate() - i);
-			
+
 			// 修正したカレンダーのテスト用に、あえて深夜〜早朝の時間帯も混ぜる
-			date.setHours(Math.floor(Math.random() * 24), Math.floor(Math.random() * 60));
+			date.setHours(
+				Math.floor(Math.random() * 24),
+				Math.floor(Math.random() * 60),
+			);
 
 			const types = [ActivityType.Run, ActivityType.Ride, ActivityType.Walk];
 			const type = types[Math.floor(Math.random() * types.length)];
-			
+
 			// タイプに応じた現実的な距離
 			let distance = 0;
 			let multiplier = 0;
@@ -88,14 +88,17 @@ export async function POST() {
 				await tx.activity.create({
 					data: {
 						...act,
-						points: act.pointsAwarded > 0 ? {
-							create: {
-								userId,
-								points: act.pointsAwarded,
-								description: `Demo Activity: ${act.activityType}`,
-							}
-						} : undefined,
-					}
+						points:
+							act.pointsAwarded > 0
+								? {
+										create: {
+											userId,
+											points: act.pointsAwarded,
+											description: `Demo Activity: ${act.activityType}`,
+										},
+									}
+								: undefined,
+					},
 				});
 			}
 		});

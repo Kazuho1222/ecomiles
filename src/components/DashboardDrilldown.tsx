@@ -167,41 +167,12 @@ export const DashboardDrilldown: React.FC<DashboardDrilldownProps> = ({
 										{getMetricTitle(selectedMetric)}
 									</h2>
 								</div>
-								{stravaConnected && <SyncButton />}
+								{stravaConnected && activities.length > 0 && <SyncButton />}
 							</div>
 
-							{!stravaConnected ? (
-								<div className="p-12 text-center bg-orange-50 dark:bg-orange-950/20 rounded-[2.5rem] border-2 border-dashed border-orange-200 dark:border-orange-900 flex flex-col items-center gap-8 shadow-sm">
-									<div className="p-6 bg-white dark:bg-orange-900/40 rounded-full shadow-inner">
-										<Bike className="w-12 h-12 text-orange-500 animate-bounce" />
-									</div>
-									<div className="space-y-4">
-										<h3 className="text-2xl font-black text-orange-900 dark:text-orange-200">
-											Stravaと連携しましょう
-										</h3>
-										<p className="text-orange-700 dark:text-orange-400 max-w-sm mx-auto leading-relaxed">
-											あなたのアクティビティを同期して、地球への貢献をリアルタイムに可視化しましょう。
-										</p>
-									</div>
-									<a
-										href="/api/strava/auth"
-										className="inline-flex items-center gap-4 px-10 py-5 bg-[#FC5200] hover:bg-[#e34a00] text-white font-black rounded-2xl transition-all transform hover:scale-105 active:scale-95 shadow-xl shadow-orange-500/20"
-									>
-										<StravaSymbol color="white" size={24} />
-										Stravaと連携
-									</a>
-
-									<button
-										type="button"
-										onClick={handleDemoSeed}
-										disabled={isSeeding}
-										className="text-orange-600 dark:text-orange-400 font-bold text-xs hover:underline decoration-2 underline-offset-4 disabled:opacity-50"
-									>
-										{isSeeding ? "生成中..." : "または、デモモードで機能を試す"}
-									</button>
-								</div>
-							) : activities.length > 0 ? (
+							{activities.length > 0 ? (
 								<div className="overflow-hidden border rounded-[2.5rem] shadow-sm bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 transition-all hover:shadow-md">
+									{/* テーブル表示 ... */}
 									<div className="overflow-x-auto">
 										<table className="min-w-full divide-y divide-gray-100 dark:divide-slate-800 text-left">
 											<thead className="bg-slate-50 dark:bg-slate-800/50">
@@ -365,6 +336,36 @@ export const DashboardDrilldown: React.FC<DashboardDrilldownProps> = ({
 											)}
 										</div>
 									)}
+								</div>
+							) : !stravaConnected ? (
+								<div className="p-12 text-center bg-orange-50 dark:bg-orange-950/20 rounded-[2.5rem] border-2 border-dashed border-orange-200 dark:border-orange-900 flex flex-col items-center gap-8 shadow-sm">
+									<div className="p-6 bg-white dark:bg-orange-900/40 rounded-full shadow-inner">
+										<Bike className="w-12 h-12 text-orange-500 animate-bounce" />
+									</div>
+									<div className="space-y-4">
+										<h3 className="text-2xl font-black text-orange-900 dark:text-orange-200">
+											Stravaと連携しましょう
+										</h3>
+										<p className="text-orange-700 dark:text-orange-400 max-w-sm mx-auto leading-relaxed">
+											あなたのアクティビティを同期して、地球への貢献をリアルタイムに可視化しましょう。
+										</p>
+									</div>
+									<a
+										href="/api/strava/auth"
+										className="inline-flex items-center gap-4 px-10 py-5 bg-[#FC5200] hover:bg-[#e34a00] text-white font-black rounded-2xl transition-all transform hover:scale-105 active:scale-95 shadow-xl shadow-orange-500/20"
+									>
+										<StravaSymbol color="white" size={24} />
+										Stravaと連携
+									</a>
+
+									<button
+										type="button"
+										onClick={handleDemoSeed}
+										disabled={isSeeding}
+										className="text-orange-600 dark:text-orange-400 font-bold text-xs hover:underline decoration-2 underline-offset-4 disabled:opacity-50"
+									>
+										{isSeeding ? "生成中..." : "または、デモモードで機能を試す"}
+									</button>
 								</div>
 							) : (
 								<div className="p-20 text-center bg-white dark:bg-slate-900 rounded-[2.5rem] border-2 border-dashed border-slate-100 dark:border-slate-800 shadow-sm">
