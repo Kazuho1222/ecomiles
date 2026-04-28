@@ -41,7 +41,8 @@ export async function POST() {
 			return NextResponse.json(
 				{
 					success: false,
-					message: "Cannot seed demo data into an account with real activities.",
+					message:
+						"Cannot seed demo data into an account with real activities.",
 				},
 				{ status: 400 },
 			);
@@ -56,7 +57,14 @@ export async function POST() {
 		}
 
 		// 3. 過去180日分のアクティビティを生成
-		const newActivities = [];
+		const newActivities: {
+			userId: string;
+			stravaActivityId: string;
+			activityType: ActivityType;
+			distance: number;
+			activityDate: Date;
+			pointsAwarded: number;
+		}[] = [];
 		const now = new Date();
 
 		for (let i = 0; i < 180; i++) {
@@ -65,12 +73,15 @@ export async function POST() {
 
 			const date = new Date(now);
 			date.setDate(date.getDate() - i);
-			
-			date.setHours(Math.floor(Math.random() * 24), Math.floor(Math.random() * 60));
+
+			date.setHours(
+				Math.floor(Math.random() * 24),
+				Math.floor(Math.random() * 60),
+			);
 
 			const types = [ActivityType.Run, ActivityType.Ride, ActivityType.Walk];
 			const type = types[Math.floor(Math.random() * types.length)];
-			
+
 			let distance = 0;
 			let multiplier = 0;
 			if (type === ActivityType.Run) {
@@ -102,14 +113,17 @@ export async function POST() {
 				await tx.activity.create({
 					data: {
 						...act,
-						points: act.pointsAwarded > 0 ? {
-							create: {
-								userId,
-								points: act.pointsAwarded,
-								description: `Demo Activity: ${act.activityType}`,
-							}
-						} : undefined,
-					}
+						points:
+							act.pointsAwarded > 0
+								? {
+										create: {
+											userId,
+											points: act.pointsAwarded,
+											description: `Demo Activity: ${act.activityType}`,
+										},
+									}
+								: undefined,
+					},
 				});
 			}
 		});
