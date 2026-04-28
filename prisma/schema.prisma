@@ -39,8 +39,6 @@ model Activity {
   stravaActivityId   String       @unique @map("strava_activity_id")
   activityType       ActivityType @map("activity_type")
   distance           Float        // km
-  startLocation      Json?        @map("start_location")
-  endLocation        Json?        @map("end_location")
   eligibleForPoints  Boolean      @default(true) @map("eligible_for_points")
   pointsAwarded      Int          @default(0) @map("points_awarded")
   createdAt          DateTime     @default(now()) @map("created_at")
