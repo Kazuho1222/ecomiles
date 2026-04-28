@@ -9,8 +9,8 @@ export async function GET(request: Request) {
 	}
 
 	const { searchParams } = new URL(request.url);
-	const skip = Number.parseInt(searchParams.get("skip") || "0");
-	const take = Number.parseInt(searchParams.get("take") || "20");
+	const skip = Number(searchParams.get("skip") || "0");
+	const take = Number(searchParams.get("take") || "20");
 
 	try {
 		const activities = await prisma.activity.findMany({
