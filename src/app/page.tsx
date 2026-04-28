@@ -11,16 +11,10 @@ export default async function Home() {
 	const { userId } = await auth();
 
 	if (userId) {
-		const user = await prisma.user.findUnique({
-			where: { id: userId },
-			select: { stravaConnected: true },
-		});
-
-		if (user?.stravaConnected) {
-			redirect("/dashboard");
-		}
+		redirect("/dashboard");
 	}
 
+	// ログインしていない場合のみデータを取得
 	const collectiveImpact = await getCollectiveImpact();
 
 	return (
@@ -34,7 +28,7 @@ export default async function Home() {
 						{userId ? (
 							<UserButton />
 						) : (
-							<SignInButton mode="modal">
+							<SignInButton mode="modal" forceRedirectUrl="/dashboard">
 								<button
 									type="button"
 									className="px-6 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full font-bold shadow-sm hover:shadow-md transition-all active:scale-95 cursor-pointer"
@@ -85,7 +79,7 @@ export default async function Home() {
 									<br />
 									人力での移動が自動的にポイントとエコ指標に変わります。
 								</p>
-								<SignInButton mode="modal" forceRedirectUrl="/api/strava/auth">
+								<SignInButton mode="modal" forceRedirectUrl="/dashboard">
 									<button
 										type="button"
 										className="inline-block cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-md hover:shadow-xl rounded-md border-none p-0 m-0 bg-transparent"
