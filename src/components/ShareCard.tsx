@@ -33,7 +33,7 @@ export const ShareCard: React.FC<ShareCardProps> = ({ data }) => {
 			style={{
 				background: `linear-gradient(135deg, #059669 0%, #0d9488 50%, #0891b2 100%)`,
 				fontFamily:
-					'var(--font-geist-sans), "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Meiryo", "sans-serif"',
+					'var(--font-geist-sans), "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif',
 			}}
 		>
 			{/* 装飾的な背景要素 */}
