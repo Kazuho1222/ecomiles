@@ -325,6 +325,13 @@ export const syncActivities = async (userId: string) => {
 		const distanceKm = stravaAct.distance / 1000;
 		const pointsToAward = calculatePoints(type, stravaAct.distance);
 
+		const existing = await prisma.activity.findUnique({
+			where: { stravaActivityId: stravaAct.id.toString() },
+		});
+		if (existing) {
+			continue; // Already synced
+		}
+
 		await prisma.activity.upsert({
 			where: { stravaActivityId: stravaAct.id.toString() },
 			update: {}, // 既に存在する場合は更新しない
