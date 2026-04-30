@@ -1,6 +1,25 @@
 import { ActivityType } from "@prisma/client";
 import { checkAndAwardBadges } from "./badge-service";
+import { BadgeDefinition } from "./badges";
+import { calculateCO2Reduction } from "./eco-utils";
 import prisma from "./prisma";
+
+interface StravaTokenResponse {
+	access_token: string;
+	refresh_token: string;
+	expires_in: number;
+	athlete: {
+		id: number;
+	};
+}
+
+interface StravaActivity {
+	id: number;
+	name: string;
+	type: string;
+	distance: number;
+	start_date: string;
+}
 
 const STRAVA_CLIENT_ID = process.env.STRAVA_CLIENT_ID;
 const STRAVA_CLIENT_SECRET = process.env.STRAVA_CLIENT_SECRET;
@@ -34,7 +53,9 @@ export const getStravaAuthUrl = () => {
 	return `https://www.strava.com/oauth/authorize?${params.toString()}`;
 };
 
-export const exchangeStravaCodeForToken = async (code: string) => {
+export const exchangeStravaCodeForToken = async (
+	code: string,
+): Promise<StravaTokenResponse> => {
 	const response = await fetch("https://www.strava.com/oauth/token", {
 		method: "POST",
 		headers: { "Content-Type": "application/json" },
@@ -53,7 +74,7 @@ export const exchangeStravaCodeForToken = async (code: string) => {
 	return response.json();
 };
 
-export const refreshStravaToken = async (userId: string) => {
+export const refreshStravaToken = async (userId: string): Promise<string> => {
 	const user = await prisma.user.findUnique({ where: { id: userId } });
 
 	if (!user || !user.stravaRefreshToken) {
@@ -75,7 +96,7 @@ export const refreshStravaToken = async (userId: string) => {
 		throw new Error("Failed to refresh token");
 	}
 
-	const data = await response.json();
+	const data: StravaTokenResponse = await response.json();
 
 	await prisma.user.update({
 		where: { id: userId },
@@ -144,7 +165,7 @@ export const calculatePoints = (
 export const getStravaActivities = async (
 	accessToken: string,
 	afterTimestamp: number,
-) => {
+): Promise<StravaActivity[]> => {
 	const response = await fetch(
 		`https://www.strava.com/api/v3/athlete/activities?after=${afterTimestamp}&per_page=100`,
 		{
@@ -167,7 +188,7 @@ export const getStravaActivities = async (
 export const getStravaActivityById = async (
 	accessToken: string,
 	activityId: string,
-) => {
+): Promise<StravaActivity> => {
 	const response = await fetch(
 		`https://www.strava.com/api/v3/activities/${activityId}`,
 		{
@@ -190,7 +211,7 @@ export const getStravaActivityById = async (
 export const syncSingleActivity = async (
 	stravaAthleteId: string,
 	stravaActivityId: string,
-) => {
+): Promise<{ success: boolean; message?: string; activityId?: number; error?: unknown }> => {
 	// アスリートIDからユーザーを特定
 	const user = await prisma.user.findFirst({
 		where: { stravaAthleteId: stravaAthleteId.toString() },
@@ -265,7 +286,14 @@ export const syncSingleActivity = async (
 /**
  * ユーザーのアクティビティを同期する
  */
-export const syncActivities = async (userId: string) => {
+export const syncActivities = async (userId: string): Promise<{
+	success: boolean;
+	message?: string;
+	newActivitiesCount?: number;
+	pointsAwardedTotal?: number;
+	co2ReductionDelta?: number;
+	newBadges?: BadgeDefinition[];
+}> => {
 	const user = await prisma.user.findUnique({
 		where: { id: userId },
 		include: {
@@ -304,6 +332,7 @@ export const syncActivities = async (userId: string) => {
 	// 重複を除去しつつ保存
 	let newActivitiesCount = 0;
 	let pointsAwardedTotal = 0;
+	let co2ReductionDelta = 0;
 
 	for (const stravaAct of rawActivities) {
 		const type = mapStravaTypeToPrisma(stravaAct.type);
@@ -320,7 +349,15 @@ export const syncActivities = async (userId: string) => {
 			continue;
 		}
 
+		const distanceKm = stravaAct.distance / 1000;
 		const pointsToAward = calculatePoints(type, stravaAct.distance);
+
+		const existing = await prisma.activity.findUnique({
+			where: { stravaActivityId: stravaAct.id.toString() },
+		});
+		if (existing) {
+			continue; // Already synced
+		}
 
 		await prisma.activity.upsert({
 			where: { stravaActivityId: stravaAct.id.toString() },
@@ -329,7 +366,7 @@ export const syncActivities = async (userId: string) => {
 				userId: userId,
 				stravaActivityId: stravaAct.id.toString(),
 				activityType: type,
-				distance: stravaAct.distance / 1000,
+				distance: distanceKm,
 				activityDate: new Date(stravaAct.start_date),
 				pointsAwarded: pointsToAward,
 				points:
@@ -345,19 +382,16 @@ export const syncActivities = async (userId: string) => {
 			},
 		});
 
-		// 新規作成された場合（Prismaのupsertは作成か更新かを直接返さないが、
-		// ここでは stravaActivityId が一意なので、もし作成されたなら
-		// activityDateが新しいか、あるいは既存のアクティビティリストに含まれていないはず）
-		// 厳密には findUnique でチェックしてから作成するほうが正確だが、
-		// 簡易的に「処理した」カウントを返す
 		newActivitiesCount++;
 		pointsAwardedTotal += pointsToAward;
+		co2ReductionDelta += calculateCO2Reduction(distanceKm);
 	}
 
 	// バッジ獲得をチェック（失敗してもアクティビティ同期結果は返す）
+	let newBadges: BadgeDefinition[] = [];
 	if (newActivitiesCount > 0) {
 		try {
-			await checkAndAwardBadges(userId);
+			newBadges = await checkAndAwardBadges(userId);
 		} catch (badgeError) {
 			console.error("Badge check failed (non-fatal):", badgeError);
 		}
@@ -367,5 +401,7 @@ export const syncActivities = async (userId: string) => {
 		success: true,
 		newActivitiesCount,
 		pointsAwardedTotal,
+		co2ReductionDelta,
+		newBadges,
 	};
 };

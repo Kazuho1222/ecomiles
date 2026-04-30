@@ -7,6 +7,7 @@ import { BadgeList } from "@/components/BadgeList";
 import { CollectiveImpactCard } from "@/components/CollectiveImpact";
 import { DashboardDrilldown } from "@/components/DashboardDrilldown";
 import { Leaderboard } from "@/components/Leaderboard";
+import { RecentAchievementsTracker } from "@/components/RecentAchievementsTracker";
 import { ShareModal } from "@/components/ShareModal";
 import { PoweredByStrava, StravaSymbol } from "@/components/StravaLogo";
 import { checkAndAwardBadges } from "@/lib/badge-service";
@@ -205,6 +206,13 @@ export default async function DashboardPage() {
 					<PoweredByStrava />
 				</a>
 			</footer>
+
+			{/* 裏側での同期（WebHook等）を検知して通知する */}
+			<RecentAchievementsTracker
+				userId={userId}
+				activities={user?.activities || []}
+				badges={user?.badges || []}
+			/>
 		</main>
 	);
 }

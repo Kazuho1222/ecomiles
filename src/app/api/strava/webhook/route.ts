@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { syncSingleActivity } from "@/lib/strava";
 
 export const dynamic = "force-dynamic";
@@ -36,9 +37,29 @@ export async function GET(request: NextRequest) {
 	return new NextResponse("Forbidden", { status: 403 });
 }
 
+const StravaWebhookSchema = z.object({
+	aspect_type: z.enum(["create", "update", "delete"]),
+	event_time: z.number(),
+	object_id: z.number(),
+	object_type: z.enum(["activity", "athlete"]),
+	owner_id: z.number(),
+	subscription_id: z.number(),
+	updates: z.record(z.string(), z.any()).optional(),
+});
+
+type StravaWebhookData = z.infer<typeof StravaWebhookSchema>;
+
 export async function POST(request: NextRequest) {
 	try {
-		const data = await request.json();
+		const rawData = await request.json();
+		const parseResult = StravaWebhookSchema.safeParse(rawData);
+
+		if (!parseResult.success) {
+			console.error("Invalid Strava webhook payload:", parseResult.error);
+			return new NextResponse("Bad Request", { status: 400 });
+		}
+
+		const data = parseResult.data;
 		console.log("Strava webhook event received:", data);
 
 		const { aspect_type, object_id, object_type, owner_id } = data;
