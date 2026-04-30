@@ -21,7 +21,7 @@ export default async function Home() {
 		<div className="flex min-h-screen flex-col items-center justify-between p-8 lg:p-24 bg-slate-50 dark:bg-black text-slate-900 dark:text-slate-100 transition-colors duration-500">
 			<main className="flex flex-col items-center justify-center flex-1 w-full max-w-5xl">
 				<div className="z-10 w-full items-center justify-between font-mono text-sm lg:flex mb-16">
-					<h1 className="text-4xl font-black tracking-tighter text-emerald-600 dark:text-emerald-500">
+					<h1 className="text-4xl font-sans font-black tracking-tighter text-emerald-600 dark:text-emerald-500">
 						EcoMiles
 					</h1>
 					<div className="flex h-auto items-center justify-center lg:static lg:h-auto lg:w-auto mt-4 lg:mt-0">
