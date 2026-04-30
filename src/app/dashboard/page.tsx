@@ -64,10 +64,10 @@ export default async function DashboardPage() {
 	const calendarStats = await getActivityCalendarStats(userId);
 
 	const totalPoints =
-		user?.points.reduce((sum: number, p: Point) => sum + p.points, 0) || 0;
+		user?.points?.reduce((sum: number, p: Point) => sum + p.points, 0) || 0;
 
 	const totalDistance =
-		user?.activities.reduce(
+		user?.activities?.reduce(
 			(sum: number, a: Activity) => sum + a.distance,
 			0,
 		) || 0;

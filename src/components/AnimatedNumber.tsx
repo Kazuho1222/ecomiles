@@ -34,5 +34,5 @@ export default function AnimatedNumber({
 		});
 	}, [springValue, precision]);
 
-	return <span ref={ref} />;
+	return <span ref={ref}>{value.toFixed(precision)}</span>;
 }
