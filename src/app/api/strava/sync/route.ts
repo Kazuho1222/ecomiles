@@ -2,7 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { syncActivities } from "@/lib/strava";
 
-export async function POST() {
+export async function POST(): Promise<NextResponse> {
 	const { userId } = await auth();
 
 	if (!userId) {

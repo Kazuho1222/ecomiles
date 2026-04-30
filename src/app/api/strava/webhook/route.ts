@@ -36,9 +36,19 @@ export async function GET(request: NextRequest) {
 	return new NextResponse("Forbidden", { status: 403 });
 }
 
+interface StravaWebhookData {
+	aspect_type: "create" | "update" | "delete";
+	event_time: number;
+	object_id: number;
+	object_type: "activity" | "athlete";
+	owner_id: number;
+	subscription_id: number;
+	updates?: Record<string, any>;
+}
+
 export async function POST(request: NextRequest) {
 	try {
-		const data = await request.json();
+		const data: StravaWebhookData = await request.json();
 		console.log("Strava webhook event received:", data);
 
 		const { aspect_type, object_id, object_type, owner_id } = data;

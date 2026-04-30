@@ -58,8 +58,8 @@ export async function GET(request: NextRequest) {
 		);
 
 		// 最新のアクティビティから順に処理するためにソート (Strava API は古い順で返す場合があるため)
-		const sortedActivities = rawActivities.sort(
-			(a: { start_date: string }, b: { start_date: string }) =>
+		const sortedActivities = [...rawActivities].sort(
+			(a, b) =>
 				new Date(b.start_date).getTime() - new Date(a.start_date).getTime(),
 		);
 
