@@ -1,5 +1,6 @@
 import { ActivityType } from "@prisma/client";
 import { checkAndAwardBadges } from "./badge-service";
+import { calculateCO2Reduction } from "./eco-utils";
 import prisma from "./prisma";
 
 const STRAVA_CLIENT_ID = process.env.STRAVA_CLIENT_ID;
@@ -304,6 +305,7 @@ export const syncActivities = async (userId: string) => {
 	// 重複を除去しつつ保存
 	let newActivitiesCount = 0;
 	let pointsAwardedTotal = 0;
+	let co2ReductionDelta = 0;
 
 	for (const stravaAct of rawActivities) {
 		const type = mapStravaTypeToPrisma(stravaAct.type);
@@ -320,6 +322,7 @@ export const syncActivities = async (userId: string) => {
 			continue;
 		}
 
+		const distanceKm = stravaAct.distance / 1000;
 		const pointsToAward = calculatePoints(type, stravaAct.distance);
 
 		await prisma.activity.upsert({
@@ -329,7 +332,7 @@ export const syncActivities = async (userId: string) => {
 				userId: userId,
 				stravaActivityId: stravaAct.id.toString(),
 				activityType: type,
-				distance: stravaAct.distance / 1000,
+				distance: distanceKm,
 				activityDate: new Date(stravaAct.start_date),
 				pointsAwarded: pointsToAward,
 				points:
@@ -345,19 +348,16 @@ export const syncActivities = async (userId: string) => {
 			},
 		});
 
-		// 新規作成された場合（Prismaのupsertは作成か更新かを直接返さないが、
-		// ここでは stravaActivityId が一意なので、もし作成されたなら
-		// activityDateが新しいか、あるいは既存のアクティビティリストに含まれていないはず）
-		// 厳密には findUnique でチェックしてから作成するほうが正確だが、
-		// 簡易的に「処理した」カウントを返す
 		newActivitiesCount++;
 		pointsAwardedTotal += pointsToAward;
+		co2ReductionDelta += calculateCO2Reduction(distanceKm);
 	}
 
 	// バッジ獲得をチェック（失敗してもアクティビティ同期結果は返す）
+	let newBadges: any[] = [];
 	if (newActivitiesCount > 0) {
 		try {
-			await checkAndAwardBadges(userId);
+			newBadges = await checkAndAwardBadges(userId);
 		} catch (badgeError) {
 			console.error("Badge check failed (non-fatal):", badgeError);
 		}
@@ -367,5 +367,7 @@ export const syncActivities = async (userId: string) => {
 		success: true,
 		newActivitiesCount,
 		pointsAwardedTotal,
+		co2ReductionDelta,
+		newBadges,
 	};
 };
