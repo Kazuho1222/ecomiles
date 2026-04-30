@@ -1,10 +1,12 @@
 "use client";
 
-import { CheckCircle2, RefreshCw } from "lucide-react";
+import confetti from "canvas-confetti";
+import { Award, CheckCircle2, Leaf, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { calculateEarthLifespanExtension } from "@/lib/eco-utils";
 
 export function SyncButton() {
 	const [isSyncing, setIsSyncing] = useState(false);
@@ -26,7 +28,7 @@ export function SyncButton() {
 				toast.dismiss(syncToastId);
 
 				if (result.newActivitiesCount > 0) {
-					// 成果のサマリー通知（詳細はRecentAchievementsTrackerが担当）
+					// 1. 基本的な同期成功トースト
 					toast.success(
 						`${result.newActivitiesCount} 件のアクティビティを同期しました！`,
 						{
@@ -34,6 +36,50 @@ export function SyncButton() {
 							description: `累計で +${result.pointsAwardedTotal} pts を獲得しました。`,
 						},
 					);
+
+					// 2. CO2削減の詳細トースト
+					if (result.co2ReductionDelta > 0) {
+						const lifespan = calculateEarthLifespanExtension(
+							result.co2ReductionDelta,
+						);
+						let lifespanText = "";
+						if (lifespan < 0.001) {
+							lifespanText = `${(lifespan * 1000000).toFixed(1)}μ秒`;
+						} else if (lifespan < 1) {
+							lifespanText = `${(lifespan * 1000).toFixed(1)}ミリ秒`;
+						} else {
+							lifespanText = `${lifespan.toFixed(2)}秒`;
+						}
+
+						toast("環境への貢献を更新しました", {
+							icon: <Leaf className="text-emerald-500" />,
+							description: `CO2を ${result.co2ReductionDelta.toFixed(2)}kg 削減！地球の寿命を ${lifespanText} 延ばしました。`,
+							duration: 5000,
+						});
+					}
+
+					// 3. バッジ獲得時の演出
+					if (result.newBadges && result.newBadges.length > 0) {
+						confetti({
+							particleCount: 150,
+							spread: 70,
+							origin: { y: 0.6 },
+							colors: ["#10b981", "#059669", "#34d399", "#fbbf24"],
+						});
+
+						result.newBadges.forEach((badge: any, index: number) => {
+							setTimeout(
+								() => {
+									toast.success(`新バッジ獲得！: ${badge.name}`, {
+										icon: <Award className="text-amber-500" />,
+										description: badge.description,
+										duration: 6000,
+									});
+								},
+								(index + 1) * 1000,
+							);
+						});
+					}
 				} else {
 					toast.info("新しいアクティビティはありませんでした。", {
 						description:

@@ -49,9 +49,14 @@ export const RecentAchievementsTracker: React.FC<RecentAchievementsTrackerProps>
 			const totalDistance = newActivities.reduce((sum, a) => sum + a.distance, 0);
 			const co2 = calculateCO2Reduction(totalDistance);
 			const lifespan = calculateEarthLifespanExtension(co2);
-			const lifespanText = lifespan < 0.001 
-				? `${(lifespan * 1000000).toFixed(1)}μ秒`
-				: `${lifespan.toFixed(2)}秒`;
+			let lifespanText = "";
+			if (lifespan < 0.001) {
+				lifespanText = `${(lifespan * 1000000).toFixed(1)}μ秒`;
+			} else if (lifespan < 1) {
+				lifespanText = `${(lifespan * 1000).toFixed(1)}ミリ秒`;
+			} else {
+				lifespanText = `${lifespan.toFixed(2)}秒`;
+			}
 
 			toast.success(`${newActivities.length} 件の新しいアクティビティが同期されました`, {
 				icon: <CheckCircle2 className="text-emerald-500" />,
