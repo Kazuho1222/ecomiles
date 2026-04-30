@@ -6,10 +6,23 @@ import confetti from "canvas-confetti";
 import { CheckCircle2, Award, Leaf } from "lucide-react";
 import { calculateCO2Reduction, calculateEarthLifespanExtension } from "@/lib/eco-utils";
 
+interface BadgeInfo {
+	id: string;
+	awardedAt: Date | string;
+	badge: { name: string; description: string };
+}
+
+interface ActivityInfo {
+	id: string;
+	distance: number;
+	createdAt: Date | string;
+	activityType: string;
+}
+
 interface RecentAchievementsTrackerProps {
 	userId: string;
-	activities: { id: string; distance: number; createdAt: Date | string; activityType: string }[];
-	badges: { id: string; awardedAt: Date | string; badge: { name: string; description: string } }[];
+	activities: ActivityInfo[];
+	badges: BadgeInfo[];
 }
 
 export const RecentAchievementsTracker: React.FC<RecentAchievementsTrackerProps> = ({
@@ -37,7 +50,7 @@ export const RecentAchievementsTracker: React.FC<RecentAchievementsTrackerProps>
 		}
 
 		// 1. 新しいアクティビティをチェック (WebHook等で裏で追加されたもの)
-		const newActivities = [];
+		const newActivities: ActivityInfo[] = [];
 		if (lastSeenActivityId && activities.length > 0) {
 			for (const activity of activities) {
 				if (activity.id === lastSeenActivityId) break;
@@ -68,7 +81,7 @@ export const RecentAchievementsTracker: React.FC<RecentAchievementsTrackerProps>
 		}
 
 		// 2. 新しいバッジをチェック
-		const newBadges = [];
+		const newBadges: BadgeInfo[] = [];
 		if (lastSeenBadgeId && badges.length > 0) {
 			for (const ub of badges) {
 				if (ub.id === lastSeenBadgeId) break;

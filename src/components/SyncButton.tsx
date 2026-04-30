@@ -8,6 +8,19 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { calculateEarthLifespanExtension } from "@/lib/eco-utils";
 
+interface SyncBadge {
+	name: string;
+	description: string;
+}
+
+interface SyncResult {
+	success: boolean;
+	newActivitiesCount: number;
+	pointsAwardedTotal: number;
+	co2ReductionDelta: number;
+	newBadges: SyncBadge[];
+}
+
 export function SyncButton() {
 	const [isSyncing, setIsSyncing] = useState(false);
 	const router = useRouter();
@@ -24,7 +37,7 @@ export function SyncButton() {
 			});
 
 			if (response.ok) {
-				const result = await response.json();
+				const result: SyncResult = await response.json();
 				toast.dismiss(syncToastId);
 
 				if (result.newActivitiesCount > 0) {
@@ -67,7 +80,7 @@ export function SyncButton() {
 							colors: ["#10b981", "#059669", "#34d399", "#fbbf24"],
 						});
 
-						result.newBadges.forEach((badge: any, index: number) => {
+						result.newBadges.forEach((badge, index) => {
 							setTimeout(
 								() => {
 									toast.success(`新バッジ獲得！: ${badge.name}`, {
