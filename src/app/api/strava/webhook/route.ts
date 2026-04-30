@@ -44,7 +44,7 @@ const StravaWebhookSchema = z.object({
 	object_type: z.enum(["activity", "athlete"]),
 	owner_id: z.number(),
 	subscription_id: z.number(),
-	updates: z.record(z.any()).optional(),
+	updates: z.record(z.string(), z.any()).optional(),
 });
 
 type StravaWebhookData = z.infer<typeof StravaWebhookSchema>;

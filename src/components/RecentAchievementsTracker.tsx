@@ -1,10 +1,14 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
-import { toast } from "sonner";
 import confetti from "canvas-confetti";
-import { CheckCircle2, Award, Leaf } from "lucide-react";
-import { calculateCO2Reduction, calculateEarthLifespanExtension } from "@/lib/eco-utils";
+import { Award, CheckCircle2 } from "lucide-react";
+import type React from "react";
+import { useEffect, useRef } from "react";
+import { toast } from "sonner";
+import {
+	calculateCO2Reduction,
+	calculateEarthLifespanExtension,
+} from "@/lib/eco-utils";
 
 interface BadgeInfo {
 	id: string;
@@ -25,16 +29,16 @@ interface RecentAchievementsTrackerProps {
 	badges: BadgeInfo[];
 }
 
-export const RecentAchievementsTracker: React.FC<RecentAchievementsTrackerProps> = ({
-	userId,
-	activities,
-	badges,
-}) => {
+export const RecentAchievementsTracker: React.FC<
+	RecentAchievementsTrackerProps
+> = ({ userId, activities, badges }) => {
 	const isFirstMount = useRef(true);
 
 	useEffect(() => {
 		// 初回マウント時またはデータ更新時にチェック
-		const lastSeenActivityId = localStorage.getItem(`lastSeenActivityId_${userId}`);
+		const lastSeenActivityId = localStorage.getItem(
+			`lastSeenActivityId_${userId}`,
+		);
 		const lastSeenBadgeId = localStorage.getItem(`lastSeenBadgeId_${userId}`);
 
 		// 初回マウント時は「過去に通知済み」としてマークする（大量の古い通知を防ぐ）
@@ -52,14 +56,25 @@ export const RecentAchievementsTracker: React.FC<RecentAchievementsTrackerProps>
 		// 1. 新しいアクティビティをチェック (WebHook等で裏で追加されたもの)
 		const newActivities: ActivityInfo[] = [];
 		if (lastSeenActivityId && activities.length > 0) {
-			for (const activity of activities) {
-				if (activity.id === lastSeenActivityId) break;
-				newActivities.push(activity);
+			const lastSeenExists = activities.some(
+				(a) => a.id === lastSeenActivityId,
+			);
+			if (!lastSeenExists) {
+				// 保存されていたIDが見つからない場合、大量通知を避けるため現在の最新にリセット
+				localStorage.setItem(`lastSeenActivityId_${userId}`, activities[0].id);
+			} else {
+				for (const activity of activities) {
+					if (activity.id === lastSeenActivityId) break;
+					newActivities.push(activity);
+				}
 			}
 		}
 
 		if (newActivities.length > 0) {
-			const totalDistance = newActivities.reduce((sum, a) => sum + a.distance, 0);
+			const totalDistance = newActivities.reduce(
+				(sum, a) => sum + a.distance,
+				0,
+			);
 			const co2 = calculateCO2Reduction(totalDistance);
 			const lifespan = calculateEarthLifespanExtension(co2);
 			let lifespanText = "";
@@ -71,11 +86,14 @@ export const RecentAchievementsTracker: React.FC<RecentAchievementsTrackerProps>
 				lifespanText = `${lifespan.toFixed(2)}秒`;
 			}
 
-			toast.success(`${newActivities.length} 件の新しいアクティビティが同期されました`, {
-				icon: <CheckCircle2 className="text-emerald-500" />,
-				description: `裏側でデータを更新しました。CO2を ${co2.toFixed(2)}kg 削減し、地球の寿命を ${lifespanText} 延ばしました！`,
-				duration: 5000,
-			});
+			toast.success(
+				`${newActivities.length} 件の新しいアクティビティが同期されました`,
+				{
+					icon: <CheckCircle2 className="text-emerald-500" />,
+					description: `裏側でデータを更新しました。CO2を ${co2.toFixed(2)}kg 削減し、地球の寿命を ${lifespanText} 延ばしました！`,
+					duration: 5000,
+				},
+			);
 
 			localStorage.setItem(`lastSeenActivityId_${userId}`, activities[0].id);
 		}
@@ -83,9 +101,15 @@ export const RecentAchievementsTracker: React.FC<RecentAchievementsTrackerProps>
 		// 2. 新しいバッジをチェック
 		const newBadges: BadgeInfo[] = [];
 		if (lastSeenBadgeId && badges.length > 0) {
-			for (const ub of badges) {
-				if (ub.id === lastSeenBadgeId) break;
-				newBadges.push(ub);
+			const lastSeenExists = badges.some((ub) => ub.id === lastSeenBadgeId);
+			if (!lastSeenExists) {
+				// 保存されていたIDが見つからない場合、リセット
+				localStorage.setItem(`lastSeenBadgeId_${userId}`, badges[0].id);
+			} else {
+				for (const ub of badges) {
+					if (ub.id === lastSeenBadgeId) break;
+					newBadges.push(ub);
+				}
 			}
 		}
 
@@ -98,13 +122,16 @@ export const RecentAchievementsTracker: React.FC<RecentAchievementsTrackerProps>
 			});
 
 			newBadges.forEach((ub, index) => {
-				setTimeout(() => {
-					toast.success(`新バッジ獲得！: ${ub.badge.name}`, {
-						icon: <Award className="text-amber-500" />,
-						description: ub.badge.description,
-						duration: 6000,
-					});
-				}, (index + 1) * 1000);
+				setTimeout(
+					() => {
+						toast.success(`新バッジ獲得！: ${ub.badge.name}`, {
+							icon: <Award className="text-amber-500" />,
+							description: ub.badge.description,
+							duration: 6000,
+						});
+					},
+					(index + 1) * 1000,
+				);
 			});
 
 			localStorage.setItem(`lastSeenBadgeId_${userId}`, badges[0].id);
