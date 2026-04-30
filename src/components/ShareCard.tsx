@@ -29,9 +29,11 @@ export const ShareCard: React.FC<ShareCardProps> = ({ data }) => {
 	return (
 		<div
 			id="share-card"
-			className="w-[1200px] h-[630px] p-16 flex flex-col justify-start text-white font-sans relative overflow-hidden"
+			className="w-[1200px] h-[630px] p-16 flex flex-col justify-start text-white relative overflow-hidden"
 			style={{
 				background: `linear-gradient(135deg, #059669 0%, #0d9488 50%, #0891b2 100%)`,
+				fontFamily:
+					'var(--font-geist-sans), "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Meiryo", "sans-serif"',
 			}}
 		>
 			{/* 装飾的な背景要素 */}
@@ -79,9 +81,7 @@ export const ShareCard: React.FC<ShareCardProps> = ({ data }) => {
 						<div className="p-2.5 bg-emerald-400 rounded-xl text-emerald-900">
 							<Leaf size={32} />
 						</div>
-						<span className="text-xl font-black tracking-wider">
-							CO2削減量
-						</span>
+						<span className="text-xl font-black tracking-wider">CO2削減量</span>
 					</div>
 					<div className="flex items-baseline gap-3">
 						<span className="text-8xl font-black tracking-tighter tabular-nums">
@@ -149,13 +149,17 @@ export const ShareCard: React.FC<ShareCardProps> = ({ data }) => {
 			{/* フッター */}
 			<div className="mt-auto flex justify-between items-end z-10 border-t border-white/20 pt-6">
 				<div className="flex flex-col gap-0.5">
-					<p className="text-[10px] font-black opacity-40 tracking-[0.2em]">一緒に始めよう</p>
+					<p className="text-[10px] font-black opacity-40 tracking-[0.2em]">
+						一緒に始めよう
+					</p>
 					<p className="text-xl font-black tracking-tight text-emerald-200/80">
 						ecomiles-omega.vercel.app
 					</p>
 				</div>
-				<div className="flex flex-col items-end gap-2">
-					<p className="text-[9px] font-black opacity-40 tracking-[0.3em] uppercase">Powered by</p>
+				<div className="flex flex-col items-end gap-1.5">
+					<p className="text-[11px] font-black opacity-40 tracking-widest uppercase">
+						Powered by
+					</p>
 					<div className="bg-white p-1.5 px-3 rounded-xl shadow-lg">
 						<StravaLogo color="#FC5200" width={90} />
 					</div>

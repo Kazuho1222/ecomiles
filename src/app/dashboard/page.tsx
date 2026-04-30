@@ -94,7 +94,8 @@ export default async function DashboardPage() {
 		totalCO2Reduction,
 		iceSaved,
 		cedarTrees,
-		userName: user?.name || clerkUser?.firstName || clerkUser?.username || "Athlete",
+		userName:
+			user?.name || clerkUser?.firstName || clerkUser?.username || "Athlete",
 		avatarUrl: clerkUser?.imageUrl,
 	};
 
@@ -144,7 +145,10 @@ export default async function DashboardPage() {
 							おかえりなさい
 						</p>
 						<p className="text-sm font-black text-slate-900 dark:text-slate-100">
-							{user?.name || clerkUser?.firstName || clerkUser?.username || "アスリート"}
+							{user?.name ||
+								clerkUser?.firstName ||
+								clerkUser?.username ||
+								"アスリート"}
 						</p>
 					</div>
 					<div className="h-8 w-px bg-slate-100 dark:bg-slate-800" />

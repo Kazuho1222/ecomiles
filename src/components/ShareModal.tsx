@@ -34,12 +34,14 @@ export const ShareModal: React.FC<ShareModalProps> = ({
 		setIsGenerating(true);
 		try {
 			// フォントの読み込み待ちやレンダリングの安定化のために少し待つ
+			await document.fonts.ready;
 			await new Promise((resolve) => setTimeout(resolve, 500));
 
 			const dataUrl = await toPng(shareCardRef.current, {
 				cacheBust: true,
 				width: 1200,
 				height: 630,
+				pixelRatio: 1,
 			});
 
 			setPreviewUrl(dataUrl);
