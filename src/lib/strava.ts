@@ -212,14 +212,21 @@ export const syncSingleActivity = async (
 	stravaAthleteId: string,
 	stravaActivityId: string,
 ): Promise<{ success: boolean; message?: string; activityId?: number; error?: unknown }> => {
+	console.log(`[Sync] Starting sync for Athlete: ${stravaAthleteId}, Activity: ${stravaActivityId}`);
+	
 	// アスリートIDからユーザーを特定
 	const user = await prisma.user.findFirst({
 		where: { stravaAthleteId: stravaAthleteId.toString() },
 	});
 
-	if (!user || !user.stravaConnected || !user.stravaAccessToken) {
-		console.error(`User not found for athlete ID: ${stravaAthleteId}`);
+	if (!user) {
+		console.error(`[Sync] User not found for athlete ID: ${stravaAthleteId}`);
 		return { success: false, message: "User not found" };
+	}
+
+	if (!user.stravaConnected || !user.stravaAccessToken) {
+		console.error(`[Sync] User ${user.id} is not connected to Strava or missing access token`);
+		return { success: false, message: "Strava not connected" };
 	}
 
 	let accessToken = user.stravaAccessToken;
@@ -229,35 +236,40 @@ export const syncSingleActivity = async (
 		!user.stravaExpiresAt ||
 		user.stravaExpiresAt.getTime() < Date.now() + 5 * 60 * 1000
 	) {
+		console.log(`[Sync] Refreshing token for user ${user.id}`);
 		accessToken = await refreshStravaToken(user.id);
 	}
 
 	try {
+		console.log(`[Sync] Fetching activity ${stravaActivityId} from Strava API`);
 		const stravaAct = await getStravaActivityById(
 			accessToken,
 			stravaActivityId,
 		);
+		
 		const type = mapStravaTypeToPrisma(stravaAct.type);
-
 		if (!type) {
+			console.log(`[Sync] Activity ${stravaActivityId} has unsupported type: ${stravaAct.type}`);
 			return { success: false, message: "Unsupported activity type" };
 		}
 
 		const pointsToAward = calculatePoints(type, stravaAct.distance);
+		const distanceKm = stravaAct.distance / 1000;
+
+		console.log(`[Sync] Saving activity to DB: ${stravaAct.name} (${distanceKm.toFixed(2)}km, ${pointsToAward}pts)`);
 
 		await prisma.activity.upsert({
 			where: { stravaActivityId: stravaAct.id.toString() },
 			update: {
-				// 更新があった場合も考慮（距離の微修正など）
 				activityType: type,
-				distance: stravaAct.distance / 1000,
+				distance: distanceKm,
 				pointsAwarded: pointsToAward,
 			},
 			create: {
 				userId: user.id,
 				stravaActivityId: stravaAct.id.toString(),
 				activityType: type,
-				distance: stravaAct.distance / 1000,
+				distance: distanceKm,
 				activityDate: new Date(stravaAct.start_date),
 				pointsAwarded: pointsToAward,
 				points:
@@ -274,11 +286,13 @@ export const syncSingleActivity = async (
 		});
 
 		// バッジ獲得をチェック
+		console.log(`[Sync] Checking badges for user ${user.id}`);
 		await checkAndAwardBadges(user.id);
 
+		console.log(`[Sync] Successfully synced activity ${stravaActivityId}`);
 		return { success: true, activityId: stravaAct.id };
 	} catch (error) {
-		console.error("Error syncing single activity:", error);
+		console.error(`[Sync] Error syncing single activity ${stravaActivityId}:`, error);
 		return { success: false, error };
 	}
 };

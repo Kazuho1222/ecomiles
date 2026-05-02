@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { after } from "next/server";
 import { z } from "zod";
 import { syncSingleActivity } from "@/lib/strava";
 
@@ -70,20 +71,23 @@ export async function POST(request: NextRequest) {
 			(aspect_type === "create" || aspect_type === "update")
 		) {
 			console.log(
-				`${aspect_type === "create" ? "New" : "Updated"} activity detected: ${object_id} for user ${owner_id}`,
+				`[Webhook] ${aspect_type === "create" ? "New" : "Updated"} activity detected: ${object_id} for user ${owner_id}`,
 			);
 
-			// Vercel(サーバーレス)環境では、NextResponseを返す前にawaitしないと
-			// 処理が完了する前にインスタンスが終了してしまうため、awaitを必須とする
-			try {
-				const result = await syncSingleActivity(
-					owner_id.toString(),
-					object_id.toString(),
-				);
-				console.log("Sync result:", result);
-			} catch (err) {
-				console.error("Sync error during webhook processing:", err);
-			}
+			// Stravaの2秒タイムアウトを回避するため、先にレスポンスを返し、
+			// Next.jsの after() を使用してバックグラウンドで同期処理を行う
+			after(async () => {
+				try {
+					console.log(`[Webhook Background] Starting sync for ${object_id}`);
+					const result = await syncSingleActivity(
+						owner_id.toString(),
+						object_id.toString(),
+					);
+					console.log(`[Webhook Background] Sync completed for ${object_id}:`, result);
+				} catch (err) {
+					console.error(`[Webhook Background] Sync failed for ${object_id}:`, err);
+				}
+			});
 		}
 
 		return NextResponse.json({ status: "ok" });
