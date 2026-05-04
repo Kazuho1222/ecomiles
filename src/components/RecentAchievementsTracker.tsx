@@ -70,8 +70,12 @@ export const RecentAchievementsTracker: React.FC<
 					(a) => a.id === lastSeenActivityId,
 				);
 				if (!lastSeenExists) {
-					// 保存されていたIDが見つからない（古い）場合、最新に更新
-					localStorage.setItem(`lastSeenActivityId_${userId}`, activities[0].id);
+					// 保存されていたIDが見つからない（大量同期でリストから漏れた等）場合
+					// 現在のリストにあるものすべてを「新着」として扱う
+					newActivities.push(...activities);
+					console.log(
+						"[Tracker] lastSeenActivityId not found in list. Treating all as new.",
+					);
 				} else {
 					for (const activity of activities) {
 						if (activity.id === lastSeenActivityId) break;
@@ -122,7 +126,11 @@ export const RecentAchievementsTracker: React.FC<
 			} else {
 				const lastSeenExists = badges.some((ub) => ub.id === lastSeenBadgeId);
 				if (!lastSeenExists) {
-					localStorage.setItem(`lastSeenBadgeId_${userId}`, badges[0].id);
+					// バッジIDが見つからない場合、最新のものを通知対象にする
+					newBadges.push(...badges);
+					console.log(
+						"[Tracker] lastSeenBadgeId not found in list. Treating all as new.",
+					);
 				} else {
 					for (const ub of badges) {
 						if (ub.id === lastSeenBadgeId) break;
