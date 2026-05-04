@@ -15,7 +15,7 @@ import {
 	Trees,
 } from "lucide-react";
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
 	calculateCedarTreeEquivalent,
 	calculateCO2Reduction,
@@ -54,6 +54,15 @@ export const DashboardDrilldown: React.FC<DashboardDrilldownProps> = ({
 	const [activities, setActivities] = useState<Activity[]>(initialActivities);
 	const [isLoadingMore, setIsLoadingMore] = useState(false);
 	const [hasMore, setHasMore] = useState(initialActivities.length >= 20);
+
+	// Propsの変更を検知してステートを更新（リアルタイム更新対応）
+	useEffect(() => {
+		// すでに読み込まれているものがある場合、先頭に新しいものを追加するか、
+		// 複雑さを避けるため一旦 initialActivities (最新20件) でリセットする。
+		// ここではシンプルに最新の状態を反映させる。
+		setActivities(initialActivities);
+		setHasMore(initialActivities.length >= 20);
+	}, [initialActivities]);
 
 	const displayedActivities = isExpanded ? activities : activities.slice(0, 5);
 

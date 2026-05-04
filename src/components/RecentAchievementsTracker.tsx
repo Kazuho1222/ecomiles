@@ -41,36 +41,48 @@ export const RecentAchievementsTracker: React.FC<
 		);
 		const lastSeenBadgeId = localStorage.getItem(`lastSeenBadgeId_${userId}`);
 
-		// 初回マウント時は「過去に通知済み」としてマークする（大量の古い通知を防ぐ）
-		if (isFirstMount.current && !lastSeenActivityId) {
-			if (activities.length > 0) {
-				localStorage.setItem(`lastSeenActivityId_${userId}`, activities[0].id);
-			}
-			if (badges.length > 0) {
-				localStorage.setItem(`lastSeenBadgeId_${userId}`, badges[0].id);
-			}
-			isFirstMount.current = false;
-			return;
-		}
+		console.log("[Tracker] Checking for updates...", {
+			userId,
+			activitiesCount: activities.length,
+			badgesCount: badges.length,
+			lastSeenActivityId,
+			isFirstMount: isFirstMount.current,
+		});
 
-		// 1. 新しいアクティビティをチェック (WebHook等で裏で追加されたもの)
+		// 1. 新しいアクティビティをチェック
 		const newActivities: ActivityInfo[] = [];
-		if (lastSeenActivityId && activities.length > 0) {
-			const lastSeenExists = activities.some(
-				(a) => a.id === lastSeenActivityId,
-			);
-			if (!lastSeenExists) {
-				// 保存されていたIDが見つからない場合、大量通知を避けるため現在の最新にリセット
-				localStorage.setItem(`lastSeenActivityId_${userId}`, activities[0].id);
+
+		if (activities.length > 0) {
+			if (!lastSeenActivityId) {
+				// 履歴がまだない場合
+				if (!isFirstMount.current) {
+					// 初回マウントでなければ、新しく追加されたものとみなす
+					newActivities.push(activities[0]);
+					console.log("[Tracker] First activity detected after mount!");
+				} else {
+					// 初回マウントなら、現在の最新を記録して終了（通知は出さない）
+					localStorage.setItem(`lastSeenActivityId_${userId}`, activities[0].id);
+					console.log("[Tracker] Initialized lastSeenActivityId");
+				}
 			} else {
-				for (const activity of activities) {
-					if (activity.id === lastSeenActivityId) break;
-					newActivities.push(activity);
+				// 履歴がある場合、差分をチェック
+				const lastSeenExists = activities.some(
+					(a) => a.id === lastSeenActivityId,
+				);
+				if (!lastSeenExists) {
+					// 保存されていたIDが見つからない（古い）場合、最新に更新
+					localStorage.setItem(`lastSeenActivityId_${userId}`, activities[0].id);
+				} else {
+					for (const activity of activities) {
+						if (activity.id === lastSeenActivityId) break;
+						newActivities.push(activity);
+					}
 				}
 			}
 		}
 
 		if (newActivities.length > 0) {
+			console.log(`[Tracker] Found ${newActivities.length} new activities!`);
 			const totalDistance = newActivities.reduce(
 				(sum, a) => sum + a.distance,
 				0,
@@ -100,20 +112,28 @@ export const RecentAchievementsTracker: React.FC<
 
 		// 2. 新しいバッジをチェック
 		const newBadges: BadgeInfo[] = [];
-		if (lastSeenBadgeId && badges.length > 0) {
-			const lastSeenExists = badges.some((ub) => ub.id === lastSeenBadgeId);
-			if (!lastSeenExists) {
-				// 保存されていたIDが見つからない場合、リセット
-				localStorage.setItem(`lastSeenBadgeId_${userId}`, badges[0].id);
+		if (badges.length > 0) {
+			if (!lastSeenBadgeId) {
+				if (!isFirstMount.current) {
+					newBadges.push(badges[0]);
+				} else {
+					localStorage.setItem(`lastSeenBadgeId_${userId}`, badges[0].id);
+				}
 			} else {
-				for (const ub of badges) {
-					if (ub.id === lastSeenBadgeId) break;
-					newBadges.push(ub);
+				const lastSeenExists = badges.some((ub) => ub.id === lastSeenBadgeId);
+				if (!lastSeenExists) {
+					localStorage.setItem(`lastSeenBadgeId_${userId}`, badges[0].id);
+				} else {
+					for (const ub of badges) {
+						if (ub.id === lastSeenBadgeId) break;
+						newBadges.push(ub);
+					}
 				}
 			}
 		}
 
 		if (newBadges.length > 0) {
+			console.log(`[Tracker] Found ${newBadges.length} new badges!`);
 			confetti({
 				particleCount: 150,
 				spread: 70,
