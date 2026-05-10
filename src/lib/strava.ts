@@ -258,12 +258,30 @@ export const syncSingleActivity = async (
 
 		console.log(`[Sync] Saving activity to DB: ${stravaAct.name} (${distanceKm.toFixed(2)}km, ${pointsToAward}pts)`);
 
+		// 既存のアクティビティを確認（現在の獲得ポイントを知るため）
+		const existingActivity = await prisma.activity.findUnique({
+			where: { stravaActivityId: stravaAct.id.toString() },
+		});
+
+		const newPointsToCreate = pointsToAward - (existingActivity?.pointsAwarded || 0);
+
 		await prisma.activity.upsert({
 			where: { stravaActivityId: stravaAct.id.toString() },
 			update: {
 				activityType: type,
 				distance: distanceKm,
 				pointsAwarded: pointsToAward,
+				// 更新時にポイントが増える場合のみ、新しいポイントレコードを作成
+				points:
+					newPointsToCreate > 0
+						? {
+								create: {
+									userId: user.id,
+									points: newPointsToCreate,
+									description: `Webhook Update: ${stravaAct.name}`,
+								},
+							}
+						: undefined,
 			},
 			create: {
 				userId: user.id,
@@ -307,6 +325,7 @@ export const syncActivities = async (userId: string): Promise<{
 	pointsAwardedTotal?: number;
 	co2ReductionDelta?: number;
 	newBadges?: BadgeDefinition[];
+	newActivityIds?: string[];
 }> => {
 	const user = await prisma.user.findUnique({
 		where: { id: userId },
@@ -347,6 +366,7 @@ export const syncActivities = async (userId: string): Promise<{
 	let newActivitiesCount = 0;
 	let pointsAwardedTotal = 0;
 	let co2ReductionDelta = 0;
+	const newActivityIds: string[] = [];
 
 	for (const stravaAct of rawActivities) {
 		const type = mapStravaTypeToPrisma(stravaAct.type);
@@ -373,7 +393,7 @@ export const syncActivities = async (userId: string): Promise<{
 			continue; // Already synced
 		}
 
-		await prisma.activity.upsert({
+		const created = await prisma.activity.upsert({
 			where: { stravaActivityId: stravaAct.id.toString() },
 			update: {}, // 既に存在する場合は更新しない
 			create: {
@@ -399,6 +419,7 @@ export const syncActivities = async (userId: string): Promise<{
 		newActivitiesCount++;
 		pointsAwardedTotal += pointsToAward;
 		co2ReductionDelta += calculateCO2Reduction(distanceKm);
+		newActivityIds.push(created.id);
 	}
 
 	// バッジ獲得をチェック（失敗してもアクティビティ同期結果は返す）
@@ -417,5 +438,6 @@ export const syncActivities = async (userId: string): Promise<{
 		pointsAwardedTotal,
 		co2ReductionDelta,
 		newBadges,
+		newActivityIds,
 	};
 };

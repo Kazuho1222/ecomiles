@@ -1,5 +1,6 @@
 "use client";
 
+import { useUser } from "@clerk/nextjs";
 import confetti from "canvas-confetti";
 import { Award, CheckCircle2, Leaf, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -19,9 +20,11 @@ interface SyncResult {
 	pointsAwardedTotal: number;
 	co2ReductionDelta: number;
 	newBadges: SyncBadge[];
+	newActivityIds?: string[];
 }
 
 export function SyncButton() {
+	const { user } = useUser();
 	const [isSyncing, setIsSyncing] = useState(false);
 	const router = useRouter();
 
@@ -41,7 +44,17 @@ export function SyncButton() {
 				toast.dismiss(syncToastId);
 
 				if (result.newActivitiesCount > 0) {
-					// 1. 基本的な同期成功トースト
+					// 1. 同期されたIDを既読リストに追加して重複トーストを防ぐ
+					if (user?.id && result.newActivityIds) {
+						const activityKey = `seenActivityIds_${user.id}`;
+						const storedIds = localStorage.getItem(activityKey);
+						const seenIds = new Set<string>(storedIds ? JSON.parse(storedIds) : []);
+						
+						result.newActivityIds.forEach(id => seenIds.add(id));
+						localStorage.setItem(activityKey, JSON.stringify(Array.from(seenIds).slice(0, 50)));
+					}
+
+					// 2. 基本的な同期成功トースト
 					toast.success(
 						`${result.newActivitiesCount} 件のアクティビティを同期しました！`,
 						{
