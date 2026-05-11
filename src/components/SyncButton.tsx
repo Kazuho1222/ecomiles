@@ -45,13 +45,24 @@ export function SyncButton() {
 
 				if (result.newActivitiesCount > 0) {
 					// 1. 同期されたIDを既読リストに追加して重複トーストを防ぐ
-					if (user?.id && result.newActivityIds) {
-						const activityKey = `seenActivityIds_${user.id}`;
-						const storedIds = localStorage.getItem(activityKey);
-						const seenIds = new Set<string>(storedIds ? JSON.parse(storedIds) : []);
-						
-						result.newActivityIds.forEach(id => seenIds.add(id));
-						localStorage.setItem(activityKey, JSON.stringify(Array.from(seenIds).slice(0, 50)));
+					if (user?.id) {
+						if (result.newActivityIds) {
+							const activityKey = `seenActivityIds_${user.id}`;
+							const storedIds = localStorage.getItem(activityKey);
+							const seenIds = new Set<string>(storedIds ? JSON.parse(storedIds) : []);
+							
+							result.newActivityIds.forEach(id => seenIds.add(id));
+							localStorage.setItem(activityKey, JSON.stringify(Array.from(seenIds).slice(0, 50)));
+						}
+
+						if (result.newBadges && result.newBadges.length > 0) {
+							const badgeKey = `seenBadgeNames_${user.id}`;
+							const storedNames = localStorage.getItem(badgeKey);
+							const seenNames = new Set<string>(storedNames ? JSON.parse(storedNames) : []);
+							
+							result.newBadges.forEach(b => seenNames.add(b.name));
+							localStorage.setItem(badgeKey, JSON.stringify(Array.from(seenNames).slice(0, 50)));
+						}
 					}
 
 					// 2. 基本的な同期成功トースト

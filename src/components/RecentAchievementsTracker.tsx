@@ -42,43 +42,40 @@ export const RecentAchievementsTracker: React.FC<
 		if (!userId) return;
 
 		const activityKey = `seenActivityIds_${userId}`;
-		const badgeKey = `seenBadgeIds_${userId}`;
+		const badgeKey = `seenBadgeNames_${userId}`; // ID(UUID)ではなく名前で管理するように変更
 		
 		const storedActivityIds = localStorage.getItem(activityKey);
-		const storedBadgeIds = localStorage.getItem(badgeKey);
+		const storedBadgeNames = localStorage.getItem(badgeKey);
 
 		const seenActivityIds = new Set<string>(storedActivityIds ? JSON.parse(storedActivityIds) : []);
-		const seenBadgeIds = new Set<string>(storedBadgeIds ? JSON.parse(storedBadgeIds) : []);
+		const seenBadgeNames = new Set<string>(storedBadgeNames ? JSON.parse(storedBadgeNames) : []);
 		
-		// localStorageにデータが存在したか（リピーターか）
-		const isReturningUser = storedActivityIds !== null;
+		// いずれかのデータがlocalStorageにあればリピーターとみなす
+		const isReturningUser = storedActivityIds !== null || storedBadgeNames !== null;
 
-		console.log("[Tracker] Checking for updates...", {
-			userId,
-			activitiesCount: activities.length,
-			badgesCount: badges.length,
-			seenActivities: seenActivityIds.size,
-			seenBadges: seenBadgeIds.size,
-			isInitialized: isInitialized.current,
-			isReturningUser
-		});
+		// 1. 初回訪問時、またはバッジ既読リストの初回作成時の処理
+		if (!isInitialized.current) {
+			// バッジ既読リストがまだ存在しない場合、既存のバッジを「既読」として初期化する
+			if (storedBadgeNames === null && badges.length > 0) {
+				const initialBadgeNames = badges.map(b => b.badge.name);
+				localStorage.setItem(badgeKey, JSON.stringify(initialBadgeNames));
+				console.log("[Tracker] Initialized badge storage for existing user");
+			}
 
-		// 完全に初回訪問時（localStorageがまったくない）の処理
-		if (!isReturningUser && activities.length > 0 && !isInitialized.current) {
-			const initialIds = activities.map(a => a.id);
-			localStorage.setItem(activityKey, JSON.stringify(initialIds));
-			console.log("[Tracker] Initialized activity storage for new user");
-			isInitialized.current = true;
-			return;
+			// 完全に初回訪問時（アクティビティ履歴もなし）の処理
+			if (!isReturningUser) {
+				const initialActivityIds = activities.map(a => a.id);
+				localStorage.setItem(activityKey, JSON.stringify(initialActivityIds));
+				console.log("[Tracker] Initialized activity storage for new user");
+				isInitialized.current = true;
+				return;
+			}
 		}
 
-		// 1. アクティビティのチェック
+		// 2. アクティビティのチェック
 		const newActivities = activities.filter(a => !seenActivityIds.has(a.id));
 
-		// リピーターであれば、初回実行時(isInitialized=false)でも通知を許可する
 		if (newActivities.length > 0 && (isInitialized.current || isReturningUser)) {
-			console.log(`[Tracker] Found ${newActivities.length} new activities`);
-			
 			const totalDistance = newActivities.reduce((sum, a) => sum + a.distance, 0);
 			const co2 = calculateCO2Reduction(totalDistance);
 			const lifespan = calculateEarthLifespanExtension(co2);
@@ -101,15 +98,14 @@ export const RecentAchievementsTracker: React.FC<
 				},
 			);
 
-			// 見たIDリストを更新 (直近50件程度を保持)
 			const updatedIds = Array.from(new Set([...activities.map(a => a.id), ...Array.from(seenActivityIds)])).slice(0, 50);
 			localStorage.setItem(activityKey, JSON.stringify(updatedIds));
 		}
 
-		// 2. バッジのチェック
-		const newBadges = badges.filter(b => !seenBadgeIds.has(b.id));
+		// 3. バッジのチェック
+		const newBadges = badges.filter(b => !seenBadgeNames.has(b.badge.name));
 
-		if (newBadges.length > 0 && isInitialized.current) {
+		if (newBadges.length > 0 && (isInitialized.current || isReturningUser)) {
 			console.log(`[Tracker] Found ${newBadges.length} new badges!`);
 			confetti({
 				particleCount: 150,
@@ -128,11 +124,11 @@ export const RecentAchievementsTracker: React.FC<
 				}, (index + 1) * 1000);
 			});
 
-			const updatedIds = Array.from(new Set([...badges.map(b => b.id), ...Array.from(seenBadgeIds)])).slice(0, 50);
-			localStorage.setItem(badgeKey, JSON.stringify(updatedIds));
+			const updatedNames = Array.from(new Set([...badges.map(b => b.badge.name), ...Array.from(seenBadgeNames)])).slice(0, 50);
+			localStorage.setItem(badgeKey, JSON.stringify(updatedNames));
 		} else if (newBadges.length > 0) {
-			const updatedIds = Array.from(new Set([...badges.map(b => b.id), ...Array.from(seenBadgeIds)])).slice(0, 50);
-			localStorage.setItem(badgeKey, JSON.stringify(updatedIds));
+			const updatedNames = Array.from(new Set([...badges.map(b => b.badge.name), ...Array.from(seenBadgeNames)])).slice(0, 50);
+			localStorage.setItem(badgeKey, JSON.stringify(updatedNames));
 		}
 
 		isInitialized.current = true;
