@@ -10,7 +10,7 @@ import {
 	Trees,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import EcoMetricCard from "@/components/EcoMetricCard";
 
 export type MetricType =
@@ -44,20 +44,30 @@ export default function RealtimeDashboard({
 	selectedMetric,
 }: RealtimeDashboardProps) {
 	const router = useRouter();
+	const isRefreshingRef = useRef<boolean>(false);
 
 	// 背景での自動更新（ポーリング & 可視性チェック）
 	useEffect(() => {
-		const handleVisibilityChange = () => {
-			if (document.visibilityState === "visible") {
+		const safeRefresh = () => {
+			// 短時間に何度もリフレッシュが走るのを防ぐ（スロットリング）
+			if (!isRefreshingRef.current && document.visibilityState === "visible") {
+				isRefreshingRef.current = true;
 				router.refresh();
+				
+				// 1秒間は次のリフレッシュを抑制
+				setTimeout(() => {
+					isRefreshingRef.current = false;
+				}, 1000);
 			}
+		};
+
+		const handleVisibilityChange = () => {
+			safeRefresh();
 		};
 
 		// 30秒ごとに定期更新（表示中のみ）
 		const interval = setInterval(() => {
-			if (document.visibilityState === "visible") {
-				router.refresh();
-			}
+			safeRefresh();
 		}, 30000);
 
 		// タブの切り替えを監視
