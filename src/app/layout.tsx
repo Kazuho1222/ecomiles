@@ -32,7 +32,13 @@ export default function RootLayout({
       >
         <body className="min-h-full flex flex-col">
           {children}
-          <Toaster position="top-center" richColors closeButton />
+          <Toaster 
+            position="top-right" 
+            richColors 
+            closeButton 
+            visibleToasts={5}
+            expand={true}
+          />
         </body>
       </html>
     </ClerkProvider>

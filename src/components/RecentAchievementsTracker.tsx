@@ -42,7 +42,7 @@ export const RecentAchievementsTracker: React.FC<
 		if (!userId) return;
 
 		const activityKey = `seenActivityIds_${userId}`;
-		const badgeKey = `seenBadgeNames_${userId}`; // ID(UUID)ではなく名前で管理するように変更
+		const badgeKey = `seenBadgeNames_${userId}`;
 		
 		const storedActivityIds = localStorage.getItem(activityKey);
 		const storedBadgeNames = localStorage.getItem(badgeKey);
@@ -50,32 +50,43 @@ export const RecentAchievementsTracker: React.FC<
 		const seenActivityIds = new Set<string>(storedActivityIds ? JSON.parse(storedActivityIds) : []);
 		const seenBadgeNames = new Set<string>(storedBadgeNames ? JSON.parse(storedBadgeNames) : []);
 		
-		// いずれかのデータがlocalStorageにあればリピーターとみなす
 		const isReturningUser = storedActivityIds !== null || storedBadgeNames !== null;
+		const now = new Date();
+		const RECENT_THRESHOLD = 10 * 60 * 1000; // 10分
 
-		// 1. 初回訪問時、またはバッジ既読リストの初回作成時の処理
+		// 1. デバイス初期化時の処理
 		if (!isInitialized.current) {
 			// バッジ既読リストがまだ存在しない場合、既存のバッジを「既読」として初期化する
 			if (storedBadgeNames === null && badges.length > 0) {
 				const initialBadgeNames = badges.map(b => b.badge.name);
 				localStorage.setItem(badgeKey, JSON.stringify(initialBadgeNames));
-				console.log("[Tracker] Initialized badge storage for existing user");
 			}
 
 			// 完全に初回訪問時（アクティビティ履歴もなし）の処理
 			if (!isReturningUser) {
-				const initialActivityIds = activities.map(a => a.id);
-				localStorage.setItem(activityKey, JSON.stringify(initialActivityIds));
-				console.log("[Tracker] Initialized activity storage for new user");
-				isInitialized.current = true;
-				return;
+				const hasVeryRecent = activities.some(a => (now.getTime() - new Date(a.createdAt).getTime()) < RECENT_THRESHOLD);
+				const hasVeryRecentBadge = badges.some(b => (now.getTime() - new Date(b.awardedAt).getTime()) < RECENT_THRESHOLD);
+
+				if (!hasVeryRecent && !hasVeryRecentBadge) {
+					// 最近のものが全くなければ、全件既読にして終了
+					const initialActivityIds = activities.map(a => a.id);
+					localStorage.setItem(activityKey, JSON.stringify(initialActivityIds));
+					isInitialized.current = true;
+					return;
+				}
+				// 最近のものがある場合は、このまま下のチェック処理に進んでトーストを出す
 			}
 		}
 
 		// 2. アクティビティのチェック
-		const newActivities = activities.filter(a => !seenActivityIds.has(a.id));
+		let newActivities = activities.filter(a => !seenActivityIds.has(a.id));
 
-		if (newActivities.length > 0 && (isInitialized.current || isReturningUser)) {
+		// 初回訪問時かつ非リピーター（新デバイス）の場合は、全件出すと多すぎるので最近のものに絞る
+		if (!isInitialized.current && !isReturningUser) {
+			newActivities = newActivities.filter(a => (now.getTime() - new Date(a.createdAt).getTime()) < RECENT_THRESHOLD);
+		}
+
+		if (newActivities.length > 0) {
 			const totalDistance = newActivities.reduce((sum, a) => sum + a.distance, 0);
 			const co2 = calculateCO2Reduction(totalDistance);
 			const lifespan = calculateEarthLifespanExtension(co2);
@@ -89,24 +100,31 @@ export const RecentAchievementsTracker: React.FC<
 				lifespanText = `${lifespan.toFixed(2)}秒`;
 			}
 
-			toast.success(
-				`${newActivities.length} 件の新しいアクティビティが同期されました`,
-				{
-					icon: <CheckCircle2 className="text-emerald-500" />,
-					description: `離れている間に ${newActivities.length} 件のデータを更新しました。CO2を ${co2.toFixed(2)}kg 削減し、地球の寿命を ${lifespanText} 延ばしました！`,
-					duration: 5000,
-				},
-			);
+			// ページロード直後の場合は少し遅らせて表示
+			setTimeout(() => {
+				toast.success(
+					`${newActivities.length} 件の新しいアクティビティが同期されました`,
+					{
+						icon: <CheckCircle2 className="text-emerald-500" />,
+						description: `離れている間に ${newActivities.length} 件のデータを更新しました。CO2を ${co2.toFixed(2)}kg 削減し、地球の寿命を ${lifespanText} 延ばしました！`,
+						duration: 5000,
+					},
+				);
+			}, isInitialized.current ? 0 : 1500);
 
 			const updatedIds = Array.from(new Set([...activities.map(a => a.id), ...Array.from(seenActivityIds)])).slice(0, 50);
 			localStorage.setItem(activityKey, JSON.stringify(updatedIds));
 		}
 
 		// 3. バッジのチェック
-		const newBadges = badges.filter(b => !seenBadgeNames.has(b.badge.name));
+		let newBadges = badges.filter(b => !seenBadgeNames.has(b.badge.name));
 
-		if (newBadges.length > 0 && (isInitialized.current || isReturningUser)) {
-			console.log(`[Tracker] Found ${newBadges.length} new badges!`);
+		// 新デバイスの場合は最近のものに絞る
+		if (!isInitialized.current && !isReturningUser) {
+			newBadges = newBadges.filter(b => (now.getTime() - new Date(b.awardedAt).getTime()) < RECENT_THRESHOLD);
+		}
+
+		if (newBadges.length > 0) {
 			confetti({
 				particleCount: 150,
 				spread: 70,
@@ -121,12 +139,9 @@ export const RecentAchievementsTracker: React.FC<
 						description: ub.badge.description,
 						duration: 6000,
 					});
-				}, (index + 1) * 1000);
+				}, (index + 1) * 1000 + (isInitialized.current ? 0 : 1500));
 			});
 
-			const updatedNames = Array.from(new Set([...badges.map(b => b.badge.name), ...Array.from(seenBadgeNames)])).slice(0, 50);
-			localStorage.setItem(badgeKey, JSON.stringify(updatedNames));
-		} else if (newBadges.length > 0) {
 			const updatedNames = Array.from(new Set([...badges.map(b => b.badge.name), ...Array.from(seenBadgeNames)])).slice(0, 50);
 			localStorage.setItem(badgeKey, JSON.stringify(updatedNames));
 		}
@@ -136,4 +151,3 @@ export const RecentAchievementsTracker: React.FC<
 
 	return null;
 };
-

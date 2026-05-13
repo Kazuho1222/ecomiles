@@ -53,12 +53,12 @@ export default function RealtimeDashboard({
 			}
 		};
 
-		// 60秒ごとに定期更新（表示中のみ）
+		// 30秒ごとに定期更新（表示中のみ）
 		const interval = setInterval(() => {
 			if (document.visibilityState === "visible") {
 				router.refresh();
 			}
-		}, 60000);
+		}, 30000);
 
 		// タブの切り替えを監視
 		document.addEventListener("visibilitychange", handleVisibilityChange);
