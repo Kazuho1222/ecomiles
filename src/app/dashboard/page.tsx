@@ -1,6 +1,5 @@
 import { UserButton } from "@clerk/nextjs";
 import { auth, currentUser } from "@clerk/nextjs/server";
-import type { Activity, Point } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { ActivityCalendar } from "@/components/ActivityCalendar";
 import { BadgeList } from "@/components/BadgeList";
@@ -50,9 +49,6 @@ export default async function DashboardPage() {
 				orderBy: { activityDate: "desc" },
 				take: 20,
 			},
-			points: {
-				orderBy: { createdAt: "desc" },
-			},
 			badges: {
 				include: {
 					badge: true,
@@ -62,18 +58,28 @@ export default async function DashboardPage() {
 		},
 	});
 
+	// 全期間の統計を個別に取得（不整合を防ぐため）
+	const [userStats, pointsStats] = await Promise.all([
+		prisma.activity.aggregate({
+			where: { userId },
+			_sum: {
+				distance: true,
+			},
+		}),
+		prisma.point.aggregate({
+			where: { userId },
+			_sum: {
+				points: true,
+			},
+		}),
+	]);
+
 	const leaderboardEntries = await getLeaderboard(5);
 	const collectiveImpact = await getCollectiveImpact();
 	const calendarStats = await getActivityCalendarStats(userId);
 
-	const totalPoints =
-		user?.points?.reduce((sum: number, p: Point) => sum + p.points, 0) || 0;
-
-	const totalDistance =
-		user?.activities?.reduce(
-			(sum: number, a: Activity) => sum + a.distance,
-			0,
-		) || 0;
+	const totalPoints = pointsStats._sum.points || 0;
+	const totalDistance = userStats._sum.distance || 0;
 
 	const totalCO2Reduction = calculateCO2Reduction(totalDistance);
 	const lifespanExtension = calculateEarthLifespanExtension(totalCO2Reduction);
