@@ -8,7 +8,8 @@ import { DashboardDrilldown } from "@/components/DashboardDrilldown";
 import { Leaderboard } from "@/components/Leaderboard";
 import { RecentAchievementsTracker } from "@/components/RecentAchievementsTracker";
 import { ShareModal } from "@/components/ShareModal";
-import { PoweredByStrava, StravaSymbol } from "@/components/StravaLogo";
+import { StravaSymbol } from "@/components/StravaLogo";
+import { Footer } from "@/components/Footer";
 import { checkAndAwardBadges } from "@/lib/badge-service";
 import {
 	calculateCedarTreeEquivalent,
@@ -204,16 +205,7 @@ export default async function DashboardPage() {
 				}
 			/>
 
-			<footer className="mt-auto flex flex-col items-center gap-4 py-16 w-full max-w-5xl">
-				<a
-					href="https://strava.com"
-					target="_blank"
-					rel="noopener noreferrer"
-					className="opacity-40 hover:opacity-100 transition-opacity"
-				>
-					<PoweredByStrava />
-				</a>
-			</footer>
+			<Footer className="mt-auto" />
 
 			{/* 裏側での同期（WebHook等）を検知して通知する */}
 			<RecentAchievementsTracker
