@@ -5,6 +5,7 @@ const isPublicRoute = createRouteMatcher([
 	"/sign-up(.*)",
 	"/",
 	"/api/strava/webhook(.*)", // Webhookを公開ルートに指定
+	"/privacy",
 ]);
 
 export default clerkMiddleware(async (auth, request) => {

@@ -3,7 +3,8 @@ import { auth } from "@clerk/nextjs/server";
 import { Leaf, Snowflake } from "lucide-react";
 import { redirect } from "next/navigation";
 import { CollectiveImpactDisplay } from "@/components/CollectiveImpact";
-import { ConnectWithStrava, PoweredByStrava } from "@/components/StravaLogo";
+import { ConnectWithStrava } from "@/components/StravaLogo";
+import { Footer } from "@/components/Footer";
 import prisma from "@/lib/prisma";
 import { getCollectiveImpact } from "@/lib/stats";
 
@@ -120,19 +121,7 @@ export default async function Home() {
 				</div>
 			</main>
 
-			<footer className="mt-24 flex flex-col items-center gap-6 py-12 border-t border-slate-100 dark:border-slate-800 w-full max-w-5xl mx-auto">
-				<a
-					href="https://strava.com"
-					target="_blank"
-					rel="noopener noreferrer"
-					className="opacity-80 hover:opacity-100 transition-opacity"
-				>
-					<PoweredByStrava />
-				</a>
-				<p className="text-xs text-slate-400 font-mono">
-					© 2026 EcoMiles. Dedicated to a sustainable future.
-				</p>
-			</footer>
+			<Footer className="mt-24" />
 		</div>
 	);
 }
