@@ -6,6 +6,8 @@ interface FooterProps {
 	showBorder?: boolean;
 }
 
+export const FOOTER_COPYRIGHT = "© 2026 EcoMiles. Dedicated to a sustainable future.";
+
 export function Footer({ className = "", showBorder = false }: FooterProps) {
 	return (
 		<footer
@@ -30,7 +32,7 @@ export function Footer({ className = "", showBorder = false }: FooterProps) {
 				</Link>
 			</div>
 			<p className="text-xs text-slate-400 font-mono">
-				© 2026 EcoMiles. Dedicated to a sustainable future.
+				{FOOTER_COPYRIGHT}
 			</p>
 		</footer>
 	);

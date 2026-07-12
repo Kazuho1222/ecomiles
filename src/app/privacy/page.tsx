@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft, Shield } from "lucide-react";
+import { FOOTER_COPYRIGHT } from "@/components/Footer";
 
 export default function PrivacyPolicy() {
 	return (
@@ -117,7 +118,7 @@ export default function PrivacyPolicy() {
 
 			<footer className="mt-24 flex flex-col items-center gap-6 py-12 border-t border-slate-200 dark:border-slate-800 w-full max-w-3xl mx-auto">
 				<p className="text-xs text-slate-400 font-mono">
-					© 2026 EcoMiles. Dedicated to a sustainable future.
+					{FOOTER_COPYRIGHT}
 				</p>
 			</footer>
 		</div>
