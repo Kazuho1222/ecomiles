@@ -12,7 +12,7 @@
 		"@base-ui/react": "^1.6.0",
 		"@clerk/nextjs": "^7.5.20",
 		"@prisma/adapter-pg": "^7.7.0",
-		"@prisma/client": "^7.7.0",
+		"@prisma/client": "^7.9.0",
 		"@supabase/supabase-js": "^2.110.7",
 		"canvas-confetti": "^1.9.4",
 		"class-variance-authority": "^0.7.1",
