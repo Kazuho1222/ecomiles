@@ -19,21 +19,22 @@ export async function POST() {
 				id: userId,
 				email: `${userId}@example.com`,
 				name: "Demo Athlete",
-				stravaConnected: false,
 			},
 		});
 
 		// 2. 既存のアクティビティの状態をチェック
 		const activities = await prisma.activity.findMany({
 			where: { userId },
-			select: { stravaActivityId: true },
+			select: { stravaActivityId: true, intervalsActivityId: true },
 		});
 
 		const hasRealActivities = activities.some(
-			(a) => !a.stravaActivityId.startsWith("demo-"),
+			(a) => 
+				(a.stravaActivityId && !a.stravaActivityId.startsWith("demo-")) ||
+				(a.intervalsActivityId && !a.intervalsActivityId.startsWith("demo-"))
 		);
 		const hasDemoActivities = activities.some((a) =>
-			a.stravaActivityId.startsWith("demo-"),
+			a.stravaActivityId?.startsWith("demo-") || a.intervalsActivityId?.startsWith("demo-")
 		);
 
 		// 本物のアクティビティがある場合は、データを混ぜないように拒否
@@ -59,7 +60,7 @@ export async function POST() {
 		// 3. 過去180日分のアクティビティを生成
 		const newActivities: {
 			userId: string;
-			stravaActivityId: string;
+			intervalsActivityId: string;
 			activityType: ActivityType;
 			distance: number;
 			activityDate: Date;
@@ -99,7 +100,7 @@ export async function POST() {
 
 			newActivities.push({
 				userId,
-				stravaActivityId: `demo-${userId}-${i}`,
+				intervalsActivityId: `demo-${userId}-${i}`,
 				activityType: type,
 				distance: distance,
 				activityDate: date,

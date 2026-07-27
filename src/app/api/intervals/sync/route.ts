@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { syncActivities } from "@/lib/strava";
+import { syncIntervalsActivities } from "@/lib/intervals";
 
 export async function POST(): Promise<NextResponse> {
 	const { userId } = await auth();
@@ -10,10 +10,10 @@ export async function POST(): Promise<NextResponse> {
 	}
 
 	try {
-		const result = await syncActivities(userId);
+		const result = await syncIntervalsActivities(userId);
 		return NextResponse.json(result);
 	} catch (error) {
-		console.error("Sync error:", error);
+		console.error("Intervals sync error:", error);
 		return new NextResponse("Internal Error", { status: 500 });
 	}
 }

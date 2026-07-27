@@ -8,7 +8,6 @@ import {
 	Trees,
 } from "lucide-react";
 import type React from "react";
-import { StravaLogo } from "./StravaLogo";
 
 interface ShareCardProps {
 	data: {
@@ -160,8 +159,10 @@ export const ShareCard: React.FC<ShareCardProps> = ({ data }) => {
 					<p className="text-[11px] font-black opacity-40 tracking-widest uppercase">
 						Powered by
 					</p>
-					<div className="bg-white p-1.5 px-3 rounded-xl shadow-lg">
-						<StravaLogo color="#FC5200" width={90} />
+					<div className="bg-purple-900/40 border border-white/20 p-2.5 px-5 rounded-2xl shadow-lg">
+						<span className="text-sm font-black tracking-wider text-purple-100">
+							Intervals.icu API
+						</span>
 					</div>
 				</div>
 			</div>

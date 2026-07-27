@@ -25,6 +25,14 @@ model User {
   stravaAccessToken   String?
   stravaRefreshToken  String?
   stravaExpiresAt     DateTime?
+  
+  // Intervals.icu integration
+  intervalsConnected    Boolean   @default(false)
+  intervalsAthleteId    String?
+  intervalsAccessToken  String?
+  intervalsRefreshToken String?
+  intervalsExpiresAt    DateTime?
+
   activities          Activity[]
   points              Point[]
   badges              UserBadge[]
@@ -36,7 +44,8 @@ model Activity {
   id                 String       @id @default(uuid())
   userId             String       @map("user_id")
   user               User         @relation(fields: [userId], references: [id])
-  stravaActivityId   String       @unique @map("strava_activity_id")
+  stravaActivityId   String?      @unique @map("strava_activity_id")
+  intervalsActivityId String?     @unique @map("intervals_activity_id")
   activityType       ActivityType @map("activity_type")
   distance           Float        // km
   eligibleForPoints  Boolean      @default(true) @map("eligible_for_points")

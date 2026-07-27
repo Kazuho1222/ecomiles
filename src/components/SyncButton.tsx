@@ -23,19 +23,24 @@ interface SyncResult {
 	newActivityIds?: string[];
 }
 
-export function SyncButton() {
+interface SyncButtonProps {
+	provider?: "intervals";
+}
+
+export function SyncButton({ provider = "intervals" }: SyncButtonProps) {
 	const { user } = useUser();
 	const [isSyncing, setIsSyncing] = useState(false);
 	const router = useRouter();
 
 	const handleSync = async () => {
 		setIsSyncing(true);
-		const syncToastId = toast.loading("Stravaからデータを同期中...", {
+		const providerName = provider === "intervals" ? "Intervals.icu" : "Strava";
+		const syncToastId = toast.loading(`${providerName}からデータを同期中...`, {
 			description: "しばらくお待ちください。",
 		});
 
 		try {
-			const response = await fetch("/api/strava/sync", {
+			const response = await fetch(`/api/${provider}/sync`, {
 				method: "POST",
 			});
 
@@ -142,7 +147,7 @@ export function SyncButton() {
 				} else {
 					toast.info("新しいアクティビティはありませんでした。", {
 						description:
-							"Stravaに最新の移動が記録されているか確認してください。",
+							`${providerName}に最新の移動が記録されているか確認してください。`,
 					});
 				}
 
@@ -151,7 +156,7 @@ export function SyncButton() {
 				toast.dismiss(syncToastId);
 				toast.error("同期に失敗しました", {
 					description:
-						"Stravaとの接続状態を確認するか、しばらく時間をおいて試してください。",
+						`${providerName}との接続状態を確認するか、しばらく時間をおいて試してください。`,
 				});
 			}
 		} catch (error) {
