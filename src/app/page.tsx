@@ -3,7 +3,6 @@ import { auth } from "@clerk/nextjs/server";
 import { Leaf, Snowflake } from "lucide-react";
 import { redirect } from "next/navigation";
 import { CollectiveImpactDisplay } from "@/components/CollectiveImpact";
-import { ConnectWithStrava } from "@/components/StravaLogo";
 import { Footer } from "@/components/Footer";
 import prisma from "@/lib/prisma";
 import { getCollectiveImpact } from "@/lib/stats";
@@ -53,7 +52,7 @@ export default async function Home() {
 					<p className="text-xl mb-12 text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
 						自転車・ウォーキング・ランニング。
 						<br />
-						環境に優しい移動をStravaで記録して、
+						環境に優しい移動をIntervals.icuで記録して、
 						<br />
 						目に見えるエコ貢献へ。
 					</p>
@@ -62,13 +61,13 @@ export default async function Home() {
 						<div className="p-12 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-800 transition-all max-w-xl mx-auto">
 							<h3 className="text-2xl font-bold mb-4">準備はいいですか？</h3>
 							<p className="mb-8 text-slate-500 dark:text-slate-400">
-								Strava と連携して、最初のアクティビティを同期しましょう。
+								Intervals.icu と連携して、最初のアクティビティを同期しましょう。
 							</p>
 							<a
-								href="/api/strava/auth"
-								className="inline-block transition-transform hover:scale-105 active:scale-95 shadow-lg rounded-md overflow-hidden"
+								href="/api/intervals/auth"
+								className="inline-flex transition-all hover:scale-105 active:scale-95 shadow-lg rounded-full px-8 py-4 bg-purple-600 hover:bg-purple-750 text-white font-black text-sm"
 							>
-								<ConnectWithStrava />
+								Intervals.icuと連携
 							</a>
 						</div>
 					) : (
@@ -76,16 +75,16 @@ export default async function Home() {
 							<div className="p-12 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-800 transition-all mb-16 max-w-xl mx-auto">
 								<h3 className="text-2xl font-bold mb-4">今すぐ始めましょう</h3>
 								<p className="mb-8 text-slate-500 dark:text-slate-400">
-									Stravaアカウントを連携するだけで、
+									アカウントを作成してIntervals.icuと連携するだけで、
 									<br />
 									人力での移動が自動的にポイントとエコ指標に変わります。
 								</p>
 								<SignInButton mode="modal" forceRedirectUrl="/dashboard">
 									<button
 										type="button"
-										className="inline-block cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-md hover:shadow-xl rounded-md border-none p-0 m-0 bg-transparent"
+										className="inline-block cursor-pointer transition-all hover:scale-105 active:scale-95 shadow-md hover:shadow-xl rounded-full border-none px-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm"
 									>
-										<ConnectWithStrava />
+										EcoMilesを始める
 									</button>
 								</SignInButton>
 							</div>
@@ -101,7 +100,7 @@ export default async function Home() {
 										自動で貢献を可視化
 									</h4>
 									<p className="text-slate-500 dark:text-slate-400 leading-relaxed">
-										Stravaで記録したアクティビティが自動的にEcoMilesに反映。CO2削減量を杉の木やスマホ充電回数など、身近な指標に変換します。
+										Intervals.icuで記録したアクティビティが自動的にEcoMilesに反映。CO2削減量を杉の木やスマホ充電回数など、身近な指標に変換します。
 									</p>
 								</div>
 								<div className="p-10 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm text-left">

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { getStravaAuthUrl } from "@/lib/strava";
+import { getIntervalsAuthUrl } from "@/lib/intervals";
 
 export async function GET() {
   const { userId } = await auth();
@@ -9,6 +9,6 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const url = getStravaAuthUrl();
+  const url = getIntervalsAuthUrl();
   return NextResponse.redirect(url);
 }

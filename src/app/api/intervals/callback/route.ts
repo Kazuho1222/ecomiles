@@ -2,11 +2,12 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { type NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import {
+	buildIntervalsTokenData,
 	calculatePoints,
-	exchangeStravaCodeForToken,
-	getStravaActivities,
-	mapStravaTypeToPrisma,
-} from "@/lib/strava";
+	exchangeIntervalsCodeForToken,
+	getIntervalsActivities,
+	mapIntervalsTypeToPrisma,
+} from "@/lib/intervals";
 
 export async function GET(request: NextRequest) {
 	const { userId } = await auth();
@@ -16,7 +17,7 @@ export async function GET(request: NextRequest) {
 
 	if (error) {
 		return NextResponse.redirect(
-			new URL("/?error=strava_access_denied", request.url),
+			new URL("/?error=intervals_access_denied", request.url),
 		);
 	}
 
@@ -25,55 +26,53 @@ export async function GET(request: NextRequest) {
 	}
 
 	try {
-		const data = await exchangeStravaCodeForToken(code);
+		const data = await exchangeIntervalsCodeForToken(code);
 		const user = await currentUser();
+		const tokenData = buildIntervalsTokenData(data);
 
 		// 1. ユーザー情報の更新/作成
 		await prisma.user.upsert({
 			where: { id: userId },
 			update: {
-				stravaConnected: true,
-				stravaAthleteId: data.athlete.id.toString(),
-				stravaAccessToken: data.access_token,
-				stravaRefreshToken: data.refresh_token,
-				stravaExpiresAt: new Date(Date.now() + data.expires_in * 1000),
+				intervalsConnected: true,
+				intervalsAthleteId: data.athlete.id.toString(),
+				...tokenData,
 			},
 			create: {
 				id: userId,
 				email: user?.emailAddresses[0].emailAddress || "",
 				name: user?.firstName || null,
-				stravaConnected: true,
-				stravaAthleteId: data.athlete.id.toString(),
-				stravaAccessToken: data.access_token,
-				stravaRefreshToken: data.refresh_token,
-				stravaExpiresAt: new Date(Date.now() + data.expires_in * 1000),
+				intervalsConnected: true,
+				intervalsAthleteId: data.athlete.id.toString(),
+				...tokenData,
 			},
 		});
 
 		// 2. 初期同期: 過去1ヶ月分のアクティビティを取得 (最大100件)
-		const oneMonthAgo = Math.floor(Date.now() / 1000) - 30 * 24 * 60 * 60;
-		const rawActivities = await getStravaActivities(
+		const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+		const oldestDateStr = thirtyDaysAgo.toISOString().split("T")[0];
+		
+		const rawActivities = await getIntervalsActivities(
 			data.access_token,
-			oneMonthAgo,
+			data.athlete.id.toString(),
+			oldestDateStr,
 		);
 
-		// 最新のアクティビティから順に処理するためにソート (Strava API は古い順で返す場合があるため)
+		// 最新のアクティビティから順に処理するためにソート
 		const sortedActivities = [...rawActivities].sort(
 			(a, b) =>
-				new Date(b.start_date).getTime() - new Date(a.start_date).getTime(),
+				new Date(b.start_date_local).getTime() - new Date(a.start_date_local).getTime(),
 		);
 
 		let totalInitialPointsAwarded = 0;
 		const MAX_INITIAL_SYNC_POINTS = 100;
 
-		for (const stravaAct of sortedActivities) {
-			const type = mapStravaTypeToPrisma(stravaAct.type);
+		for (const intervalsAct of sortedActivities) {
+			const type = mapIntervalsTypeToPrisma(intervalsAct.type);
 			if (!type) continue; // 対象外のタイプはスキップ
 
-			// このアクティビティで獲得可能なポイントを計算
-			const potentialPoints = calculatePoints(type, stravaAct.distance);
+			const potentialPoints = calculatePoints(type, intervalsAct.distance);
 
-			// 残りの付与枠を計算
 			const remainingAllowance = Math.max(
 				0,
 				MAX_INITIAL_SYNC_POINTS - totalInitialPointsAwarded,
@@ -82,16 +81,15 @@ export async function GET(request: NextRequest) {
 
 			totalInitialPointsAwarded += pointsToAward;
 
-			// アクティビティとポイントを保存
 			await prisma.activity.upsert({
-				where: { stravaActivityId: stravaAct.id.toString() },
+				where: { intervalsActivityId: intervalsAct.id.toString() },
 				update: {}, // すでに存在すれば何もしない
 				create: {
 					userId: userId,
-					stravaActivityId: stravaAct.id.toString(),
+					intervalsActivityId: intervalsAct.id.toString(),
 					activityType: type,
-					distance: stravaAct.distance / 1000, // km
-					activityDate: new Date(stravaAct.start_date),
+					distance: intervalsAct.distance / 1000, // km
+					activityDate: new Date(intervalsAct.start_date_local),
 					eligibleForPoints: true,
 					pointsAwarded: pointsToAward,
 					points:
@@ -100,7 +98,7 @@ export async function GET(request: NextRequest) {
 									create: {
 										userId: userId,
 										points: pointsToAward,
-										description: `Initial Sync Bonus: ${stravaAct.name}`,
+										description: `Initial Sync Bonus (Intervals): ${intervalsAct.name}`,
 									},
 								}
 							: undefined,
@@ -109,12 +107,12 @@ export async function GET(request: NextRequest) {
 		}
 
 		return NextResponse.redirect(
-			new URL("/dashboard?success=strava_connected", request.url),
+			new URL("/dashboard?success=intervals_connected", request.url),
 		);
 	} catch (err) {
-		console.error("Strava callback error:", err);
+		console.error("Intervals callback error:", err);
 		return NextResponse.redirect(
-			new URL("/?error=strava_connection_failed", request.url),
+			new URL("/?error=intervals_connection_failed", request.url),
 		);
 	}
 }

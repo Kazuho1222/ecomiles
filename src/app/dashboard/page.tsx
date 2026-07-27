@@ -8,7 +8,6 @@ import { DashboardDrilldown } from "@/components/DashboardDrilldown";
 import { Leaderboard } from "@/components/Leaderboard";
 import { RecentAchievementsTracker } from "@/components/RecentAchievementsTracker";
 import { ShareModal } from "@/components/ShareModal";
-import { StravaSymbol } from "@/components/StravaLogo";
 import { Footer } from "@/components/Footer";
 import { checkAndAwardBadges } from "@/lib/badge-service";
 import {
@@ -59,16 +58,43 @@ export default async function DashboardPage() {
 		},
 	});
 
+	const isDemoMode = user?.activities.some((a) =>
+		a.stravaActivityId?.startsWith("demo-") || a.intervalsActivityId?.startsWith("demo-")
+	);
+
+	// デモモードかどうかに応じて、集計対象からデモデータを除外するか決定する
+	const activityFilter = isDemoMode
+		? { userId }
+		: {
+				userId,
+				NOT: {
+					stravaActivityId: {
+						startsWith: "demo-",
+					},
+				},
+			};
+
+	const pointFilter = isDemoMode
+		? { userId }
+		: {
+				userId,
+				NOT: {
+					description: {
+						contains: "Demo Activity",
+					},
+				},
+			};
+
 	// 全期間の統計を個別に取得（不整合を防ぐため）
 	const [userStats, pointsStats] = await Promise.all([
 		prisma.activity.aggregate({
-			where: { userId },
+			where: activityFilter,
 			_sum: {
 				distance: true,
 			},
 		}),
 		prisma.point.aggregate({
-			where: { userId },
+			where: pointFilter,
 			_sum: {
 				points: true,
 			},
@@ -109,14 +135,10 @@ export default async function DashboardPage() {
 		avatarUrl: clerkUser?.imageUrl,
 	};
 
-	const isDemoMode = user?.activities.some((a) =>
-		a.stravaActivityId.startsWith("demo-"),
-	);
-
 	return (
 		<main className="flex min-h-screen flex-col items-center p-6 lg:p-12 bg-slate-50 dark:bg-black">
 			{isDemoMode && (
-				<div className="w-full max-w-5xl mb-8 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 rounded-2xl p-4 flex items-center justify-between gap-4">
+				<div className="w-full max-w-5xl mb-8 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 rounded-2xl p-4 flex items-center justify-between gap-4 flex-wrap">
 					<div className="flex items-center gap-3">
 						<div className="p-2 bg-amber-100 dark:bg-amber-900/40 rounded-xl text-amber-600 dark:text-amber-400">
 							<span className="text-lg">💡</span>
@@ -126,16 +148,18 @@ export default async function DashboardPage() {
 								現在はデモモードで表示しています
 							</p>
 							<p className="text-[10px] font-bold text-amber-700 dark:text-amber-400">
-								実際のアクティビティを同期するには Strava と連携してください。
+								実際のアクティビティを同期するには Strava または Intervals.icu と連携してください。
 							</p>
 						</div>
 					</div>
-					<a
-						href="/api/strava/auth"
-						className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-black rounded-xl transition-all shadow-sm"
-					>
-						Stravaと連携
-					</a>
+					<div className="flex gap-2">
+						<a
+							href="/api/intervals/auth"
+							className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-[10px] font-black rounded-xl transition-all shadow-sm"
+						>
+							Intervals.icuと連携
+						</a>
+					</div>
 				</div>
 			)}
 
@@ -164,13 +188,22 @@ export default async function DashboardPage() {
 					<div className="h-8 w-px bg-slate-100 dark:bg-slate-800" />
 					<div className="flex items-center gap-3">
 						<ShareModal data={shareData} variant="compact" />
-						{user?.stravaConnected && (
-							<div className="flex items-center gap-2 px-3 py-1 bg-orange-50 dark:bg-orange-950/30 rounded-full border border-orange-100 dark:border-orange-900">
-								<StravaSymbol color="#FC5200" size={14} />
-								<span className="text-[10px] font-black text-orange-600 dark:text-orange-400 tracking-wider">
-									Strava連携済み
+
+						{user?.intervalsConnected ? (
+							<div className="flex items-center gap-2 px-3 py-1 bg-purple-50 dark:bg-purple-950/30 rounded-full border border-purple-100 dark:border-purple-900">
+								<span className="h-2 w-2 rounded-full bg-purple-500" />
+								<span className="text-[10px] font-black text-purple-600 dark:text-purple-400 tracking-wider">
+									Intervals連携済み
 								</span>
 							</div>
+						) : (
+							<a
+								href="/api/intervals/auth"
+								className="flex items-center gap-1.5 px-3 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-purple-50 dark:hover:bg-purple-950/20 text-slate-500 hover:text-purple-600 rounded-full border border-slate-200 dark:border-slate-700 hover:border-purple-200 transition-colors text-[10px] font-bold"
+							>
+								<span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
+								Intervals連携
+							</a>
 						)}
 						<UserButton
 							appearance={{
@@ -187,7 +220,7 @@ export default async function DashboardPage() {
 			<DashboardDrilldown
 				dashboardData={dashboardData}
 				activities={user?.activities || []}
-				stravaConnected={!!user?.stravaConnected}
+				intervalsConnected={!!user?.intervalsConnected}
 				key={user?.id}
 				sidebarTop={<BadgeList key="badges" userBadges={user?.badges || []} />}
 				wideContent={

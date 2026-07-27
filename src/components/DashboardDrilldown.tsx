@@ -29,13 +29,12 @@ import RealtimeDashboard, {
 	type DashboardData,
 	type MetricType,
 } from "./RealtimeDashboard";
-import { StravaSymbol } from "./StravaLogo";
 import { SyncButton } from "./SyncButton";
 
 interface DashboardDrilldownProps {
 	dashboardData: DashboardData;
 	activities: Activity[];
-	stravaConnected: boolean;
+	intervalsConnected?: boolean;
 	sidebarTop?: React.ReactNode;
 	sidebarBottom?: React.ReactNode;
 	wideContent?: React.ReactNode;
@@ -44,7 +43,7 @@ interface DashboardDrilldownProps {
 export const DashboardDrilldown: React.FC<DashboardDrilldownProps> = ({
 	dashboardData,
 	activities: initialActivities,
-	stravaConnected,
+	intervalsConnected = false,
 	sidebarTop,
 	sidebarBottom,
 	wideContent,
@@ -176,7 +175,9 @@ export const DashboardDrilldown: React.FC<DashboardDrilldownProps> = ({
 										{getMetricTitle(selectedMetric)}
 									</h2>
 								</div>
-								{stravaConnected && activities.length > 0 && <SyncButton />}
+								{intervalsConnected && activities.length > 0 && (
+									<SyncButton provider="intervals" />
+								)}
 							</div>
 
 							{activities.length > 0 ? (
@@ -294,14 +295,27 @@ export const DashboardDrilldown: React.FC<DashboardDrilldownProps> = ({
 																</span>
 															</td>
 															<td className="px-8 py-5 whitespace-nowrap text-sm text-right">
-																<a
-																	href={`https://www.strava.com/activities/${activity.stravaActivityId}`}
-																	target="_blank"
-																	rel="noopener noreferrer"
-																	className="text-[#FC5200] hover:underline font-black text-[10px]"
-																>
-																	詳細
-																</a>
+																{activity.intervalsActivityId ? (
+																	<a
+																		href={`https://intervals.icu/activities/${activity.intervalsActivityId}`}
+																		target="_blank"
+																		rel="noopener noreferrer"
+																		className="text-purple-650 hover:underline font-black text-[10px]"
+																	>
+																		詳細 (Intervals)
+																	</a>
+																) : activity.stravaActivityId ? (
+																	<a
+																		href={`https://www.strava.com/activities/${activity.stravaActivityId}`}
+																		target="_blank"
+																		rel="noopener noreferrer"
+																		className="text-[#FC5200] hover:underline font-black text-[10px]"
+																	>
+																		詳細 (Strava)
+																	</a>
+																) : (
+																	<span className="text-slate-400 text-[10px]">詳細なし</span>
+																)}
 															</td>
 														</tr>
 													);
@@ -346,32 +360,34 @@ export const DashboardDrilldown: React.FC<DashboardDrilldownProps> = ({
 										</div>
 									)}
 								</div>
-							) : !stravaConnected ? (
-								<div className="p-12 text-center bg-orange-50 dark:bg-orange-950/20 rounded-[2.5rem] border-2 border-dashed border-orange-200 dark:border-orange-900 flex flex-col items-center gap-8 shadow-sm">
-									<div className="p-6 bg-white dark:bg-orange-900/40 rounded-full shadow-inner">
-										<Bike className="w-12 h-12 text-orange-500 animate-bounce" />
+							) : !intervalsConnected ? (
+								<div className="p-12 text-center bg-slate-50 dark:bg-slate-900/20 rounded-[2.5rem] border-2 border-dashed border-slate-200 dark:border-slate-800 flex flex-col items-center gap-8 shadow-sm">
+									<div className="p-6 bg-white dark:bg-slate-850 rounded-full shadow-inner">
+										<Bike className="w-12 h-12 text-emerald-500 animate-bounce" />
 									</div>
 									<div className="space-y-4">
-										<h3 className="text-2xl font-black text-orange-900 dark:text-orange-200">
-											Stravaと連携しましょう
+										<h3 className="text-2xl font-black text-slate-800 dark:text-slate-200">
+											サービスと連携しましょう
 										</h3>
-										<p className="text-orange-700 dark:text-orange-400 max-w-sm mx-auto leading-relaxed">
-											あなたのアクティビティを同期して、地球への貢献をリアルタイムに可視化しましょう。
+										<p className="text-slate-600 dark:text-slate-400 max-w-sm mx-auto leading-relaxed text-sm">
+											アクティビティを同期して、地球への貢献をリアルタイムに可視化しましょう。
 										</p>
 									</div>
-									<a
-										href="/api/strava/auth"
-										className="inline-flex items-center gap-4 px-10 py-5 bg-[#FC5200] hover:bg-[#e34a00] text-white font-black rounded-2xl transition-all transform hover:scale-105 active:scale-95 shadow-xl shadow-orange-500/20"
-									>
-										<StravaSymbol color="white" size={24} />
-										Stravaと連携
-									</a>
+									<div className="flex flex-col sm:flex-row gap-4 w-full justify-center max-w-md">
+										<a
+											href="/api/intervals/auth"
+											className="flex-1 inline-flex items-center justify-center gap-3 px-6 py-4 bg-purple-650 hover:bg-purple-750 text-white font-black rounded-2xl transition-all transform hover:scale-105 active:scale-95 shadow-md shadow-purple-500/10 text-sm"
+										>
+											<span className="h-2.5 w-2.5 rounded-full bg-white" />
+											Intervals.icuと連携
+										</a>
+									</div>
 
 									<button
 										type="button"
 										onClick={handleDemoSeed}
 										disabled={isSeeding}
-										className="text-orange-600 dark:text-orange-400 font-bold text-xs hover:underline decoration-2 underline-offset-4 disabled:opacity-50"
+										className="text-slate-600 dark:text-slate-400 font-bold text-xs hover:underline decoration-2 underline-offset-4 disabled:opacity-50"
 									>
 										{isSeeding ? "生成中..." : "または、デモモードで機能を試す"}
 									</button>

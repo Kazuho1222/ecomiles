@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { PoweredByStrava } from "./StravaLogo";
 
 interface FooterProps {
 	className?: string;
@@ -16,12 +15,12 @@ export function Footer({ className = "", showBorder = false }: FooterProps) {
 			} ${className}`}
 		>
 			<a
-				href="https://strava.com"
+				href="https://intervals.icu"
 				target="_blank"
 				rel="noopener noreferrer"
-				className="opacity-60 hover:opacity-100 transition-opacity"
+				className="text-[10px] text-slate-400 hover:text-purple-500 font-bold tracking-widest uppercase transition-colors"
 			>
-				<PoweredByStrava />
+				Powered by Intervals.icu API
 			</a>
 			<div className="flex gap-4 text-xs text-slate-400 font-medium">
 				<Link

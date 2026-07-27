@@ -23,8 +23,22 @@ export const getCollectiveImpact = async () => {
 		},
 	});
 
-	const totalDistance = stats._sum.distance || 0;
-	const totalActivities = stats._count.id || 0;
+	const hasProductionData = (stats._count.id || 0) > 0;
+
+	// 本物のアクティビティが1件もない場合は、デモデータも含めて集計する（デモモード用のフォールバック）
+	const finalStats = hasProductionData
+		? stats
+		: await prisma.activity.aggregate({
+				_sum: {
+					distance: true,
+				},
+				_count: {
+					id: true,
+				},
+			});
+
+	const totalDistance = finalStats._sum.distance || 0;
+	const totalActivities = finalStats._count.id || 0;
 	const totalCO2Reduction = calculateCO2Reduction(totalDistance);
 
 	return {
@@ -60,10 +74,27 @@ export const getLeaderboard = async (limit = 5) => {
 		take: limit,
 	});
 
-	if (pointAggregates.length === 0) return [];
+	// 本物のポイントデータがない場合は、デモデータも含めて集計する（デモモード用のフォールバック）
+	const finalAggregates =
+		pointAggregates.length > 0
+			? pointAggregates
+			: await prisma.point.groupBy({
+					by: ["userId"],
+					_sum: {
+						points: true,
+					},
+					orderBy: {
+						_sum: {
+							points: "desc",
+						},
+					},
+					take: limit,
+				});
+
+	if (finalAggregates.length === 0) return [];
 
 	// 2. ランクインしたユーザーの情報を取得
-	const userIds = pointAggregates.map((item) => item.userId);
+	const userIds = finalAggregates.map((item) => item.userId);
 	const users = await prisma.user.findMany({
 		where: {
 			id: { in: userIds },
