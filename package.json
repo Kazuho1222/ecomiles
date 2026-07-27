@@ -47,6 +47,11 @@
 		"typescript": "^7"
 	},
 	"overrides": {
-		"@hono/node-server": "^1.19.13"
+		"@hono/node-server": "^2.0.5",
+		"sharp": "^0.35.0",
+		"brace-expansion": "^2.0.1",
+		"postcss": "^8.4.31",
+		"find-my-way": "^9.6.1",
+		"valibot": "^1.4.2"
 	}
 }
