@@ -31,7 +31,8 @@ interface IntervalsActivity {
 	name: string;
 	type: string;
 	distance: number; // in meters
-	start_date_local: string; // ISO-8601
+	start_date?: string; // UTC ISO-8601
+	start_date_local?: string; // ISO-8601
 }
 
 const INTERVALS_CLIENT_ID = process.env.INTERVALS_CLIENT_ID;
@@ -125,7 +126,19 @@ export const refreshIntervalsToken = async (userId: string): Promise<string> => 
 	return data.access_token;
 };
 
-// --- 追加機能 ---
+/**
+ * Intervals.icu アクティビティの開始日時を Date オブジェクトに変換
+ * UTC ISO文字列の start_date を優先使用し、存在しない場合 start_date_local をフォールバック利用
+ */
+export const getIntervalsActivityDate = (intervalsAct: IntervalsActivity): Date => {
+	if (intervalsAct.start_date) {
+		return new Date(intervalsAct.start_date);
+	}
+	if (intervalsAct.start_date_local) {
+		return new Date(intervalsAct.start_date_local);
+	}
+	return new Date();
+};
 
 /**
  * Intervals.icuのアクティビティタイプをPrismaの型に変換
@@ -326,7 +339,7 @@ export const syncSingleIntervalsActivity = async (
 			const duplicate = await findDuplicateActivity(prisma, user.id, {
 				type,
 				distanceKm,
-				activityDate: new Date(intervalsAct.start_date_local),
+				activityDate: getIntervalsActivityDate(intervalsAct),
 			});
 			if (duplicate) {
 				existingActivity = duplicate;
@@ -360,7 +373,7 @@ export const syncSingleIntervalsActivity = async (
 					intervalsActivityId: intervalsAct.id.toString(),
 					activityType: type,
 					distance: distanceKm,
-					activityDate: new Date(intervalsAct.start_date_local),
+					activityDate: getIntervalsActivityDate(intervalsAct),
 					pointsAwarded: pointsToAward,
 					points:
 						pointsToAward > 0
@@ -470,7 +483,7 @@ export const syncIntervalsActivities = async (userId: string): Promise<{
 			const duplicate = await findDuplicateActivity(prisma, userId, {
 				type,
 				distanceKm,
-				activityDate: new Date(intervalsAct.start_date_local),
+				activityDate: getIntervalsActivityDate(intervalsAct),
 			});
 			if (duplicate) {
 				existing = duplicate;
@@ -508,7 +521,7 @@ export const syncIntervalsActivities = async (userId: string): Promise<{
 				intervalsActivityId: intervalsAct.id.toString(),
 				activityType: type,
 				distance: distanceKm,
-				activityDate: new Date(intervalsAct.start_date_local),
+				activityDate: getIntervalsActivityDate(intervalsAct),
 				pointsAwarded: pointsToAward,
 				points:
 					pointsToAward > 0

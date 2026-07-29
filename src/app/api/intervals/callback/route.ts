@@ -6,6 +6,7 @@ import {
 	calculatePoints,
 	exchangeIntervalsCodeForToken,
 	getIntervalsActivities,
+	getIntervalsActivityDate,
 	mapIntervalsTypeToPrisma,
 } from "@/lib/intervals";
 
@@ -61,7 +62,7 @@ export async function GET(request: NextRequest) {
 		// 最新のアクティビティから順に処理するためにソート
 		const sortedActivities = [...rawActivities].sort(
 			(a, b) =>
-				new Date(b.start_date_local).getTime() - new Date(a.start_date_local).getTime(),
+				getIntervalsActivityDate(b).getTime() - getIntervalsActivityDate(a).getTime(),
 		);
 
 		let totalInitialPointsAwarded = 0;
@@ -89,7 +90,7 @@ export async function GET(request: NextRequest) {
 					intervalsActivityId: intervalsAct.id.toString(),
 					activityType: type,
 					distance: intervalsAct.distance / 1000, // km
-					activityDate: new Date(intervalsAct.start_date_local),
+					activityDate: getIntervalsActivityDate(intervalsAct),
 					eligibleForPoints: true,
 					pointsAwarded: pointsToAward,
 					points:
