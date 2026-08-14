@@ -10,7 +10,7 @@
 	},
 	"dependencies": {
 		"@base-ui/react": "^1.7.0",
-		"@clerk/nextjs": "^7.7.1",
+		"@clerk/nextjs": "^7.7.3",
 		"@prisma/adapter-pg": "^7.9.1",
 		"@prisma/client": "^7.9.1",
 		"@supabase/supabase-js": "^2.112.2",
