@@ -100,7 +100,7 @@ export const ActivityCalendar: React.FC<ActivityCalendarProps> = ({
 	}, [weeks]);
 
 	return (
-		<div className="p-8 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
+		<div className="isolate p-8 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
 			<div className="flex items-center gap-3 mb-8">
 				<div className="p-2 bg-emerald-50 dark:bg-emerald-950/30 rounded-xl">
 					<Calendar
@@ -215,7 +215,7 @@ export const ActivityCalendar: React.FC<ActivityCalendarProps> = ({
 						initial={{ opacity: 0, scale: 0.95 }}
 						animate={{ opacity: 1, scale: 1 }}
 						exit={{ opacity: 0, scale: 0.95 }}
-						className="fixed z-9999 pointer-events-none"
+						className="fixed z-40 pointer-events-none"
 						style={{
 							left: hoveredDay.x,
 							top: hoveredDay.y,

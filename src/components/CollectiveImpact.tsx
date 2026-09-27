@@ -27,7 +27,7 @@ export const CollectiveImpactCard = ({
 	const offset = circumference - (contributionPercentage / 100) * circumference;
 
 	return (
-		<div className="lg:col-span-2 p-10 bg-emerald-600 dark:bg-emerald-900/40 text-white rounded-[3rem] shadow-xl shadow-emerald-500/10 border border-emerald-500/20 overflow-hidden relative group">
+		<div className="isolate lg:col-span-2 p-10 bg-emerald-600 dark:bg-emerald-900/40 text-white rounded-[3rem] shadow-xl shadow-emerald-500/10 border border-emerald-500/20 overflow-hidden relative group">
 			{/* 背景の装飾用アイコン */}
 			<div className="absolute -bottom-10 -left-10 text-white/5 transform -rotate-12 group-hover:scale-110 transition-transform duration-700">
 				<Trees size={240} />
