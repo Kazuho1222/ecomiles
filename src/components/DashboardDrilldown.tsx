@@ -53,15 +53,41 @@ export const DashboardDrilldown: React.FC<DashboardDrilldownProps> = ({
 	const [activities, setActivities] = useState<Activity[]>(initialActivities);
 	const [isLoadingMore, setIsLoadingMore] = useState(false);
 	const [hasMore, setHasMore] = useState(initialActivities.length >= 20);
+	const [hasLoadedMore, setHasLoadedMore] = useState(false);
 
 	// Propsの変更を検知してステートを更新（リアルタイム更新対応）
 	useEffect(() => {
-		// すでに読み込まれているものがある場合、先頭に新しいものを追加するか、
-		// 複雑さを避けるため一旦 initialActivities (最新20件) でリセットする。
-		// ここではシンプルに最新の状態を反映させる。
-		setActivities(initialActivities);
-		setHasMore(initialActivities.length >= 20);
-	}, [initialActivities]);
+		setActivities((prevActivities) => {
+			if (!initialActivities || initialActivities.length === 0) {
+				return prevActivities;
+			}
+			if (prevActivities.length === 0) {
+				return initialActivities;
+			}
+
+			// initialActivities（最新データ）をベースにし、既存の読み込み済み過去アクティビティをマージ
+			const initialMap = new Map(initialActivities.map((a) => [a.id, a]));
+			const remainingPrev = prevActivities.filter((a) => !initialMap.has(a.id));
+			const merged = [...initialActivities, ...remainingPrev];
+
+			// 日付降順 (activityDate desc) にソート
+			merged.sort(
+				(a, b) =>
+					new Date(b.activityDate).getTime() -
+					new Date(a.activityDate).getTime(),
+			);
+
+			return merged;
+		});
+
+		// 追加読み込みを行っていない場合は initialActivities の件数で hasMore を判定
+		// 既に追加読み込み済みの場合は、全体件数が20件未満になった場合を除き hasMore を勝手に戻さない
+		if (!hasLoadedMore) {
+			setHasMore(initialActivities.length >= 20);
+		} else if (initialActivities.length < 20) {
+			setHasMore(false);
+		}
+	}, [initialActivities, hasLoadedMore]);
 
 	const displayedActivities = isExpanded ? activities : activities.slice(0, 5);
 
@@ -76,7 +102,26 @@ export const DashboardDrilldown: React.FC<DashboardDrilldownProps> = ({
 				if (newActivities.length < 20) {
 					setHasMore(false);
 				}
-				setActivities((prev) => [...prev, ...newActivities]);
+				if (newActivities.length > 0) {
+					setHasLoadedMore(true);
+					setActivities((prev) => {
+						const existingIds = new Set(prev.map((a) => a.id));
+						const uniqueNew = newActivities.filter(
+							(a) => !existingIds.has(a.id),
+						);
+						if (uniqueNew.length === 0) {
+							setHasMore(false);
+							return prev;
+						}
+						const merged = [...prev, ...uniqueNew];
+						merged.sort(
+							(a, b) =>
+								new Date(b.activityDate).getTime() -
+								new Date(a.activityDate).getTime(),
+						);
+						return merged;
+					});
+				}
 			}
 		} catch (error) {
 			console.error("Failed to load more activities:", error);
