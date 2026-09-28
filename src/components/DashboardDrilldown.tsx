@@ -15,7 +15,7 @@ import {
 	Trees,
 } from "lucide-react";
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
 	calculateCedarTreeEquivalent,
 	calculateCO2Reduction,
@@ -53,30 +53,111 @@ export const DashboardDrilldown: React.FC<DashboardDrilldownProps> = ({
 	const [activities, setActivities] = useState<Activity[]>(initialActivities);
 	const [isLoadingMore, setIsLoadingMore] = useState(false);
 	const [hasMore, setHasMore] = useState(initialActivities.length >= 20);
+	const [hasLoadedMore, setHasLoadedMore] = useState(false);
+	const [pageOffset, setPageOffset] = useState(initialActivities.length);
+
+	const activitiesRef = useRef(activities);
+	activitiesRef.current = activities;
 
 	// Propsの変更を検知してステートを更新（リアルタイム更新対応）
 	useEffect(() => {
-		// すでに読み込まれているものがある場合、先頭に新しいものを追加するか、
-		// 複雑さを避けるため一旦 initialActivities (最新20件) でリセットする。
-		// ここではシンプルに最新の状態を反映させる。
-		setActivities(initialActivities);
-		setHasMore(initialActivities.length >= 20);
-	}, [initialActivities]);
+		setActivities((prevActivities) => {
+			if (!initialActivities || initialActivities.length === 0) {
+				return prevActivities;
+			}
+			if (prevActivities.length === 0) {
+				return initialActivities;
+			}
+
+			// initialActivities（最新データ）をベースにし、既存の読み込み済み過去アクティビティをマージ
+			const initialMap = new Map(initialActivities.map((a) => [a.id, a]));
+			const remainingPrev = prevActivities.filter((a) => !initialMap.has(a.id));
+			const merged = [...initialActivities, ...remainingPrev];
+
+			// 日付降順 (activityDate desc) にソート
+			merged.sort(
+				(a, b) =>
+					new Date(b.activityDate).getTime() -
+					new Date(a.activityDate).getTime(),
+			);
+
+			return merged;
+		});
+
+		// 追加読み込みを行っていない場合は initialActivities の件数で hasMore と offset を判定
+		// 既に追加読み込み済みの場合は、全体件数が20件未満になった場合を除き hasMore を勝手に戻さない
+		if (!hasLoadedMore) {
+			setHasMore(initialActivities.length >= 20);
+			setPageOffset(initialActivities.length);
+		} else if (initialActivities.length < 20) {
+			setHasMore(false);
+		}
+	}, [initialActivities, hasLoadedMore]);
 
 	const displayedActivities = isExpanded ? activities : activities.slice(0, 5);
 
 	const loadMore = async () => {
 		setIsLoadingMore(true);
 		try {
-			const response = await fetch(
-				`/api/activities?skip=${activities.length}&take=20`,
-			);
-			if (response.ok) {
+			let currentOffset = pageOffset;
+			let isExhausted = false;
+			const accumulatedNew: Activity[] = [];
+			const existingIds = new Set(activitiesRef.current.map((a) => a.id));
+			let attempts = 0;
+			const maxAttempts = 5; // 重複スキップの最大試行回数
+
+			// 重複がある場合はユニークなアクティビティが見つかるか、サーバー側の末尾に達するまで進める
+			while (!isExhausted && attempts < maxAttempts) {
+				attempts++;
+				const response = await fetch(
+					`/api/activities?skip=${currentOffset}&take=20`,
+				);
+				if (!response.ok) {
+					break;
+				}
+
 				const newActivities: Activity[] = await response.json();
+				// 0件の空ページでもページネーション試行・末尾到達として記録
+				setHasLoadedMore(true);
+				currentOffset += newActivities.length;
+
 				if (newActivities.length < 20) {
+					isExhausted = true;
 					setHasMore(false);
 				}
-				setActivities((prev) => [...prev, ...newActivities]);
+
+				if (newActivities.length === 0) {
+					break;
+				}
+
+				for (const act of newActivities) {
+					if (!existingIds.has(act.id)) {
+						existingIds.add(act.id);
+						accumulatedNew.push(act);
+					}
+				}
+
+				// ユニークなアクティビティが1件以上見つかったら、この回の読み込みとして完了
+				if (accumulatedNew.length > 0) {
+					break;
+				}
+			}
+
+			setPageOffset(currentOffset);
+
+			if (accumulatedNew.length > 0) {
+				setActivities((prev) => {
+					const prevIds = new Set(prev.map((a) => a.id));
+					const toAdd = accumulatedNew.filter((a) => !prevIds.has(a.id));
+					if (toAdd.length === 0) return prev;
+					const merged = [...prev, ...toAdd];
+					merged.sort(
+						(a, b) =>
+							new Date(b.activityDate).getTime() -
+							new Date(a.activityDate).getTime(),
+					);
+					return merged;
+				});
 			}
 		} catch (error) {
 			console.error("Failed to load more activities:", error);
