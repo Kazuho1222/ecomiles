@@ -4,7 +4,7 @@ const isPublicRoute = createRouteMatcher([
 	"/sign-in(.*)",
 	"/sign-up(.*)",
 	"/",
-	"/api/strava/webhook(.*)", // Webhookを公開ルートに指定
+	"/api/intervals/webhook(.*)", // Webhookを公開ルートに指定
 	"/privacy",
 ]);
 
