@@ -154,10 +154,19 @@ export function SyncButton({ provider = "intervals" }: SyncButtonProps) {
 				router.refresh();
 			} else {
 				toast.dismiss(syncToastId);
-				toast.error("同期に失敗しました", {
-					description:
-						`${providerName}との接続状態を確認するか、しばらく時間をおいて試してください。`,
-				});
+				if (response.status === 401) {
+					toast.error("認証の有効期限が切れました", {
+						description: `${providerName}との再連携を行ってください。`,
+					});
+				} else if (response.status === 502 || response.status === 503) {
+					toast.error("一時的な通信エラーが発生しました", {
+						description: `${providerName}のサーバーと通信できませんでした。しばらく待ってから再試行してください。`,
+					});
+				} else {
+					toast.error("同期に失敗しました", {
+						description: `${providerName}との接続状態を確認するか、しばらく時間をおいて試してください。`,
+					});
+				}
 			}
 		} catch (error) {
 			console.error("Sync error:", error);
