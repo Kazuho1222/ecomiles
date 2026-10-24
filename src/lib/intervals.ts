@@ -289,24 +289,40 @@ const findDuplicateActivity = async (
 
 /**
  * 有効な Intervals.icu アクセストークンを取得する
- * 期限切れ、またはトークンが存在しない場合は自動でリフレッシュを試みる
+ * 期限切れでリフレッシュトークンが存在する場合は自動リフレッシュを行う
  */
 export const getValidIntervalsAccessToken = async (
 	userId: string,
 	expiresAt: Date | null,
 ): Promise<string> => {
+	const { accessToken, refreshToken } = await getIntervalsTokensFromClerk(userId);
+
+	if (!accessToken && !refreshToken) {
+		throw new Error("Intervals.icu tokens not found");
+	}
+
 	const isExpired = !expiresAt || expiresAt.getTime() < Date.now() + 5 * 60 * 1000;
 
-	if (isExpired) {
+	// 期限切れかつリフレッシュトークンが存在する場合はリフレッシュを試みる
+	if (isExpired && refreshToken) {
+		try {
+			return await refreshIntervalsToken(userId);
+		} catch (err) {
+			console.error(`[Intervals Sync] Token refresh failed, falling back to current access token:`, err);
+		}
+	}
+
+	// アクセストークンが存在すればそれを返却（refresh_tokenが無いOAuth連携の場合もそのまま使用）
+	if (accessToken) {
+		return accessToken;
+	}
+
+	// アクセストークンが無くリフレッシュトークンのみある場合はリフレッシュを試行
+	if (refreshToken) {
 		return await refreshIntervalsToken(userId);
 	}
 
-	const { accessToken } = await getIntervalsTokensFromClerk(userId);
-	if (!accessToken) {
-		return await refreshIntervalsToken(userId);
-	}
-
-	return accessToken;
+	throw new Error("No valid Intervals.icu access token available");
 };
 
 /**

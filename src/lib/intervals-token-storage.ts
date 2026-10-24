@@ -1,8 +1,16 @@
 import { clerkClient } from "@clerk/nextjs/server";
+import { createClerkClient } from "@clerk/backend";
 
 export interface IntervalsTokenData {
 	access_token: string;
 	refresh_token?: string;
+}
+
+async function getClerkBackendClient() {
+	if (process.env.CLERK_SECRET_KEY) {
+		return createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
+	}
+	return await clerkClient();
 }
 
 /**
@@ -13,7 +21,7 @@ export async function saveIntervalsTokensToClerk(
 	userId: string,
 	data: IntervalsTokenData,
 ): Promise<void> {
-	const client = await clerkClient();
+	const client = await getClerkBackendClient();
 	await client.users.updateUserMetadata(userId, {
 		privateMetadata: {
 			intervalsAccessToken: data.access_token,
@@ -28,7 +36,7 @@ export async function saveIntervalsTokensToClerk(
 export async function getIntervalsTokensFromClerk(
 	userId: string,
 ): Promise<{ accessToken: string | null; refreshToken: string | null }> {
-	const client = await clerkClient();
+	const client = await getClerkBackendClient();
 	const clerkUser = await client.users.getUser(userId);
 	const privateMeta = (clerkUser.privateMetadata || {}) as {
 		intervalsAccessToken?: string;
@@ -47,7 +55,7 @@ export async function getIntervalsTokensFromClerk(
 export async function clearIntervalsTokensFromClerk(
 	userId: string,
 ): Promise<void> {
-	const client = await clerkClient();
+	const client = await getClerkBackendClient();
 	await client.users.updateUserMetadata(userId, {
 		privateMetadata: {
 			intervalsAccessToken: null,

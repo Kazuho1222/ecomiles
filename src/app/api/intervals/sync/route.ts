@@ -11,6 +11,9 @@ export async function POST(): Promise<NextResponse> {
 
 	try {
 		const result = await syncIntervalsActivities(userId);
+		if (!result.success) {
+			return NextResponse.json(result, { status: 400 });
+		}
 		return NextResponse.json(result);
 	} catch (error) {
 		console.error("Intervals sync error:", error);
