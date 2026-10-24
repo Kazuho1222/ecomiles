@@ -14,21 +14,20 @@ async function main() {
   console.log('🌱 Generating dummy eco-athletes...');
 
   const dummyUsers = [
-    { email: 'athlete.one@example.com', name: 'Eco Walker 🌿' },
-    { email: 'athlete.two@example.com', name: 'Cycle Hero 🚲' },
-    { email: 'athlete.three@example.com', name: 'Green Runner 🏃' },
+    { id: 'dummy-athlete-one', name: 'Eco Walker 🌿' },
+    { id: 'dummy-athlete-two', name: 'Cycle Hero 🚲' },
+    { id: 'dummy-athlete-three', name: 'Green Runner 🏃' },
   ];
 
   for (const userData of dummyUsers) {
     const user = await prisma.user.upsert({
-      where: { email: userData.email },
-      update: {},
-      create: {
-        id: `dummy-${Math.random().toString(36).substring(7)}`,
-        email: userData.email,
+      where: { id: userData.id },
+      update: {
         name: userData.name,
-        stravaConnected: true,
-        stravaAthleteId: `dummy-id-${Math.random().toString(10).substring(2, 8)}`,
+      },
+      create: {
+        id: userData.id,
+        name: userData.name,
       },
     });
 

@@ -42,20 +42,21 @@ EcoMilesは、環境に優しい移動手段（サイクリング、ウォーキ
 #### ユーザーテーブル (`users`)
 ```prisma
 model User {
-  id                  String      @id
-  email               String      @unique
-  name                String?
-  createdAt           DateTime    @default(now())
-  stravaConnected     Boolean     @default(false)
-  stravaAthleteId     String?
-  stravaAccessToken   String?
-  stravaRefreshToken  String?
-  stravaExpiresAt     DateTime?
-  activities          Activity[]
-  points              Point[]
-  badges              UserBadge[]
+  id                    String      @id // Clerk User ID
+  name                  String?
+  createdAt             DateTime    @default(now())
+  
+  // Intervals.icu integration (OAuthトークンはClerk privateMetadataで安全に管理・DB非保持)
+  intervalsConnected    Boolean     @default(false)
+  intervalsAthleteId    String?     @unique
+  intervalsExpiresAt    DateTime?
+
+  activities            Activity[]
+  points                Point[]
+  badges                UserBadge[]
 }
 ```
+> **セキュリティ方針**: メールアドレスやOAuthトークン（`accessToken` / `refreshToken`）などの機密情報はDBに保存せず、認証基盤であるClerkで安全に一元管理（`privateMetadata`）します。
 
 #### アクティビティテーブル (`activities`)
 ```prisma

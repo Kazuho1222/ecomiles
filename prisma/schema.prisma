@@ -16,21 +16,13 @@ enum ActivityType {
 }
 
 model User {
-  id                  String      @id @default(uuid())
-  email               String      @unique
-  name                String?
-  createdAt           DateTime    @default(now())
-  stravaConnected     Boolean     @default(false)
-  stravaAthleteId     String?
-  stravaAccessToken   String?
-  stravaRefreshToken  String?
-  stravaExpiresAt     DateTime?
+  id                    String      @id
+  name                  String?
+  createdAt             DateTime    @default(now())
   
-  // Intervals.icu integration
-  intervalsConnected    Boolean   @default(false)
-  intervalsAthleteId    String?
-  intervalsAccessToken  String?
-  intervalsRefreshToken String?
+  // Intervals.icu integration (OAuth tokens stored in Clerk privateMetadata)
+  intervalsConnected    Boolean     @default(false)
+  intervalsAthleteId    String?     @unique
   intervalsExpiresAt    DateTime?
 
   activities          Activity[]

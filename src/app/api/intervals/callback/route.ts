@@ -9,6 +9,7 @@ import {
 	getIntervalsActivityDate,
 	mapIntervalsTypeToPrisma,
 } from "@/lib/intervals";
+import { saveIntervalsTokensToClerk } from "@/lib/intervals-token-storage";
 
 export async function GET(request: NextRequest) {
 	const { userId } = await auth();
@@ -31,17 +32,20 @@ export async function GET(request: NextRequest) {
 		const user = await currentUser();
 		const tokenData = buildIntervalsTokenData(data);
 
-		// 1. ユーザー情報の更新/作成
+		// 1. トークンを Clerk の privateMetadata に安全に保管（自前DBには保存しない）
+		await saveIntervalsTokensToClerk(userId, data);
+
+		// 2. ユーザー情報の更新/作成（emailやトークンは自前DBに持たない）
 		await prisma.user.upsert({
 			where: { id: userId },
 			update: {
+				name: user?.firstName || undefined,
 				intervalsConnected: true,
 				intervalsAthleteId: data.athlete.id.toString(),
 				...tokenData,
 			},
 			create: {
 				id: userId,
-				email: user?.emailAddresses[0].emailAddress || "",
 				name: user?.firstName || null,
 				intervalsConnected: true,
 				intervalsAthleteId: data.athlete.id.toString(),
