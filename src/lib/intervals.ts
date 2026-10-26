@@ -4,6 +4,11 @@ import { BadgeDefinition } from "./badges";
 import { calculateCO2Reduction } from "./eco-utils";
 import prisma from "./prisma";
 
+import {
+	getIntervalsTokensFromClerk,
+	saveIntervalsTokensToClerk,
+} from "./intervals-token-storage";
+
 interface IntervalsTokenResponse {
 	access_token: string;
 	refresh_token?: string;
@@ -14,15 +19,25 @@ interface IntervalsTokenResponse {
 	};
 }
 
-/** Intervals.icu tokens typically expire after 8 hours when expires_in is omitted. */
-const INTERVALS_TOKEN_TTL_SECONDS = 8 * 60 * 60;
+export type IntervalsErrorCode = "NOT_CONNECTED" | "TOKEN_EXPIRED" | "UPSTREAM_ERROR";
+
+export class IntervalsAuthError extends Error {
+	constructor(
+		message: string,
+		public readonly code: IntervalsErrorCode,
+	) {
+		super(message);
+		this.name = "IntervalsAuthError";
+	}
+}
 
 export const buildIntervalsTokenData = (data: IntervalsTokenResponse) => {
-	const expiresInSeconds = data.expires_in ?? INTERVALS_TOKEN_TTL_SECONDS;
+	// expires_in が明示的に指定されている場合のみ有効期限を算出
+	// 指定がない場合は長期間/無期限有効（またはAPIキー相当）として null をセット
 	return {
-		intervalsAccessToken: data.access_token,
-		...(data.refresh_token ? { intervalsRefreshToken: data.refresh_token } : {}),
-		intervalsExpiresAt: new Date(Date.now() + expiresInSeconds * 1000),
+		intervalsExpiresAt: data.expires_in
+			? new Date(Date.now() + data.expires_in * 1000)
+			: null,
 	};
 };
 
@@ -92,32 +107,51 @@ export const exchangeIntervalsCodeForToken = async (
 export const refreshIntervalsToken = async (userId: string): Promise<string> => {
 	const user = await prisma.user.findUnique({ where: { id: userId } });
 
-	if (!user || !user.intervalsRefreshToken) {
-		throw new Error("User not found or not connected to Intervals.icu");
+	if (!user) {
+		throw new IntervalsAuthError("User not found", "NOT_CONNECTED");
+	}
+
+	const { refreshToken } = await getIntervalsTokensFromClerk(userId);
+
+	if (!refreshToken) {
+		throw new IntervalsAuthError("User not connected to Intervals.icu or refresh token not found", "NOT_CONNECTED");
 	}
 
 	const params = new URLSearchParams();
 	params.append("client_id", INTERVALS_CLIENT_ID);
 	params.append("client_secret", INTERVALS_CLIENT_SECRET);
-	params.append("refresh_token", user.intervalsRefreshToken);
+	params.append("refresh_token", refreshToken);
 	params.append("grant_type", "refresh_token");
 
-	const response = await fetch("https://intervals.icu/api/oauth/token", {
-		method: "POST",
-		headers: {
-			"Content-Type": "application/x-www-form-urlencoded",
-		},
-		body: params.toString(),
-	});
+	let response: Response;
+	try {
+		response = await fetch("https://intervals.icu/api/oauth/token", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/x-www-form-urlencoded",
+			},
+			body: params.toString(),
+		});
+	} catch (networkErr) {
+		console.error("Network error refreshing Intervals.icu token:", networkErr);
+		throw new IntervalsAuthError("Network failure connecting to Intervals.icu", "UPSTREAM_ERROR");
+	}
 
 	if (!response.ok) {
 		const text = await response.text();
 		console.error("Failed to refresh token:", text);
-		throw new Error("Failed to refresh token");
+		if (response.status === 400 || response.status === 401) {
+			throw new IntervalsAuthError("Intervals.icu refresh token expired or revoked. Please reconnect.", "TOKEN_EXPIRED");
+		}
+		throw new IntervalsAuthError("Upstream error while refreshing token with Intervals.icu", "UPSTREAM_ERROR");
 	}
 
 	const data: IntervalsTokenResponse = await response.json();
 
+	// Clerk の privateMetadata に新しいトークンを退避保存
+	await saveIntervalsTokensToClerk(userId, data);
+
+	// DB側は有効期限のみ更新
 	await prisma.user.update({
 		where: { id: userId },
 		data: buildIntervalsTokenData(data),
@@ -207,7 +241,10 @@ export const getIntervalsActivities = async (
 	if (!response.ok) {
 		const text = await response.text();
 		console.error("Failed to fetch Intervals.icu activities:", text);
-		throw new Error("Failed to fetch Intervals.icu activities");
+		if (response.status === 401) {
+			throw new IntervalsAuthError("Intervals.icu access token is invalid or expired", "TOKEN_EXPIRED");
+		}
+		throw new IntervalsAuthError(`Failed to fetch Intervals.icu activities (HTTP ${response.status})`, "UPSTREAM_ERROR");
 	}
 
 	return response.json();
@@ -233,7 +270,10 @@ export const getIntervalsActivityById = async (
 	if (!response.ok) {
 		const text = await response.text();
 		console.error(`Failed to fetch Intervals.icu activity ${activityId}:`, text);
-		throw new Error("Failed to fetch Intervals.icu activity");
+		if (response.status === 401) {
+			throw new IntervalsAuthError("Intervals.icu access token is invalid or expired", "TOKEN_EXPIRED");
+		}
+		throw new IntervalsAuthError(`Failed to fetch Intervals.icu activity (HTTP ${response.status})`, "UPSTREAM_ERROR");
 	}
 
 	return response.json();
@@ -275,6 +315,56 @@ const findDuplicateActivity = async (
 };
 
 /**
+ * 有効な Intervals.icu アクセストークンを取得する
+ * 期限切れトークンは決して返却せず、リフレッシュ不可または失敗時は明確なエラーを投げる
+ */
+export const getValidIntervalsAccessToken = async (
+	userId: string,
+	expiresAt: Date | null,
+): Promise<string> => {
+	const { accessToken, refreshToken } = await getIntervalsTokensFromClerk(userId);
+
+	if (!accessToken && !refreshToken) {
+		throw new IntervalsAuthError("Intervals.icu tokens not found", "NOT_CONNECTED");
+	}
+
+	// expiresAt が明示的に記録されている場合のみ期限切れチェック (5分前マージン)
+	// expiresAt が null の場合は無期限/APIキー相当として扱う
+	const isExpired = expiresAt ? expiresAt.getTime() < Date.now() + 5 * 60 * 1000 : false;
+
+	if (isExpired) {
+		if (refreshToken) {
+			// リフレッシュトークンが存在する場合は通常通りリフレッシュを試行
+			return await refreshIntervalsToken(userId);
+		}
+
+		// 改修前のコードでは expires_in が提供されなくても固定8時間のTTLを保存していたため、
+		// refreshToken がない（単独access_token構成の）場合、過去の誤った expiresAt が残っている可能性がある。
+		// accessToken が存在する場合は即時エラーとせず返却し、実際のアクティビティAPI呼び出し（401）で失効を判定する。
+		if (accessToken) {
+			return accessToken;
+		}
+
+		throw new IntervalsAuthError(
+			"Intervals.icu token has expired and no refresh token is available. Reconnection required.",
+			"TOKEN_EXPIRED",
+		);
+	}
+
+	// 期限内（または expiresAt が null）でアクセストークンが存在する場合
+	if (accessToken) {
+		return accessToken;
+	}
+
+	// アクセストークンがなくリフレッシュトークンのみ存在する場合
+	if (refreshToken) {
+		return await refreshIntervalsToken(userId);
+	}
+
+	throw new IntervalsAuthError("No valid Intervals.icu access token available", "NOT_CONNECTED");
+};
+
+/**
  * 特定のアクティビティを同期する (Webhook用)
  */
 export const syncSingleIntervalsActivity = async (
@@ -293,30 +383,41 @@ export const syncSingleIntervalsActivity = async (
 		return { success: false, message: "User not found" };
 	}
 
-	if (!user.intervalsConnected || !user.intervalsAccessToken) {
+	if (!user.intervalsConnected) {
 		console.error(`[Intervals Sync] User ${user.id} is not connected to Intervals.icu`);
 		return { success: false, message: "Intervals.icu not connected" };
 	}
 
-	let accessToken = user.intervalsAccessToken;
-
-	// トークンの有効期限チェック
-	if (
-		user.intervalsRefreshToken &&
-		(!user.intervalsExpiresAt ||
-			user.intervalsExpiresAt.getTime() < Date.now() + 5 * 60 * 1000)
-	) {
-		console.log(`[Intervals Sync] Refreshing token for user ${user.id}`);
-		accessToken = await refreshIntervalsToken(user.id);
+	let accessToken: string;
+	try {
+		accessToken = await getValidIntervalsAccessToken(user.id, user.intervalsExpiresAt);
+	} catch (tokenErr) {
+		console.error(`[Intervals Sync] Failed to get valid token for user ${user.id}:`, tokenErr);
+		return { success: false, message: "Intervals token invalid or expired" };
 	}
 
 	try {
-		console.log(`[Intervals Sync] Fetching activity ${intervalsActivityId} from Intervals.icu API`);
-		const intervalsAct = await getIntervalsActivityById(
-			accessToken,
-			intervalsAthleteId,
-			intervalsActivityId,
-		);
+		let intervalsAct: IntervalsActivity;
+		try {
+			console.log(`[Intervals Sync] Fetching activity ${intervalsActivityId} from Intervals.icu API`);
+			intervalsAct = await getIntervalsActivityById(
+				accessToken,
+				intervalsAthleteId,
+				intervalsActivityId,
+			);
+		} catch (apiErr) {
+			if (apiErr instanceof IntervalsAuthError && apiErr.code === "TOKEN_EXPIRED") {
+				console.log(`[Intervals Sync] Received 401 for activity ${intervalsActivityId}, attempting refresh...`);
+				const newAccessToken = await refreshIntervalsToken(user.id);
+				intervalsAct = await getIntervalsActivityById(
+					newAccessToken,
+					intervalsAthleteId,
+					intervalsActivityId,
+				);
+			} else {
+				throw apiErr;
+			}
+		}
 
 		const type = mapIntervalsTypeToPrisma(intervalsAct.type);
 		if (!type) {
@@ -401,18 +502,23 @@ export const syncSingleIntervalsActivity = async (
 	}
 };
 
-/**
- * ユーザーのアクティビティを同期する
- */
-export const syncIntervalsActivities = async (userId: string): Promise<{
+export interface SyncIntervalsActivityResult {
 	success: boolean;
 	message?: string;
+	errorType?: IntervalsErrorCode;
 	newActivitiesCount?: number;
 	pointsAwardedTotal?: number;
 	co2ReductionDelta?: number;
 	newBadges?: BadgeDefinition[];
 	newActivityIds?: string[];
-}> => {
+}
+
+/**
+ * ユーザーのアクティビティを同期する
+ */
+export const syncIntervalsActivities = async (
+	userId: string,
+): Promise<SyncIntervalsActivityResult> => {
 	const user = await prisma.user.findUnique({
 		where: { id: userId },
 		include: {
@@ -423,19 +529,31 @@ export const syncIntervalsActivities = async (userId: string): Promise<{
 		},
 	});
 
-	if (!user || !user.intervalsConnected || !user.intervalsAccessToken || !user.intervalsAthleteId) {
-		return { success: false, message: "Intervals.icu not connected" };
+	if (!user || !user.intervalsConnected || !user.intervalsAthleteId) {
+		return {
+			success: false,
+			message: "Intervals.icu not connected",
+			errorType: "NOT_CONNECTED",
+		};
 	}
 
-	let accessToken = user.intervalsAccessToken;
-
-	// トークンの有効期限チェック (余裕を持って5分前)
-	if (
-		user.intervalsRefreshToken &&
-		(!user.intervalsExpiresAt ||
-			user.intervalsExpiresAt.getTime() < Date.now() + 5 * 60 * 1000)
-	) {
-		accessToken = await refreshIntervalsToken(userId);
+	let accessToken: string;
+	try {
+		accessToken = await getValidIntervalsAccessToken(userId, user.intervalsExpiresAt);
+	} catch (tokenErr) {
+		console.error(`[Intervals Sync] Failed to get valid token for user ${userId}:`, tokenErr);
+		if (tokenErr instanceof IntervalsAuthError) {
+			return {
+				success: false,
+				message: tokenErr.message,
+				errorType: tokenErr.code,
+			};
+		}
+		return {
+			success: false,
+			message: "Intervals.icu token unavailable",
+			errorType: "UPSTREAM_ERROR",
+		};
 	}
 
 	// 最後に同期したアクティビティの時間を取得 (なければ30日前から)
@@ -446,7 +564,50 @@ export const syncIntervalsActivities = async (userId: string): Promise<{
 
 	const oldestDateStr = oldestDate.toISOString().split("T")[0];
 
-	const rawActivities = await getIntervalsActivities(accessToken, user.intervalsAthleteId, oldestDateStr);
+	let rawActivities: IntervalsActivity[];
+	try {
+		rawActivities = await getIntervalsActivities(accessToken, user.intervalsAthleteId, oldestDateStr);
+	} catch (apiErr) {
+		console.error(`[Intervals Sync] Failed to fetch activities from Intervals.icu:`, apiErr);
+		if (apiErr instanceof IntervalsAuthError) {
+			if (apiErr.code === "TOKEN_EXPIRED") {
+				// 401認証エラーの場合、リフレッシュトークンがあれば自動リフレッシュ再試行
+				try {
+					console.log(`[Intervals Sync] Received 401, attempting token refresh for user ${userId}`);
+					const newAccessToken = await refreshIntervalsToken(userId);
+					rawActivities = await getIntervalsActivities(newAccessToken, user.intervalsAthleteId, oldestDateStr);
+				} catch (retryErr) {
+					console.error(`[Intervals Sync] Re-fetch after token refresh failed:`, retryErr);
+					return {
+						success: false,
+						message: "Intervals.icu authentication failed. Please reconnect your account.",
+						errorType: "TOKEN_EXPIRED",
+					};
+				}
+			} else {
+				return {
+					success: false,
+					message: apiErr.message,
+					errorType: apiErr.code,
+				};
+			}
+		} else {
+			return {
+				success: false,
+				message: "Failed to fetch activities from Intervals.icu upstream",
+				errorType: "UPSTREAM_ERROR",
+			};
+		}
+	}
+
+	// 取得成功時、過去の改修前に保存された無効な過去の intervalsExpiresAt が残っていれば NULL にセルフヒーリング
+	if (user.intervalsExpiresAt && user.intervalsExpiresAt.getTime() < Date.now()) {
+		await prisma.user.update({
+			where: { id: userId },
+			data: { intervalsExpiresAt: null },
+		}).catch((err) => console.warn("Failed to clear legacy expiresAt:", err));
+	}
+
 	console.log(
 		`Fetched ${rawActivities.length} activities from Intervals.icu since ${oldestDateStr}`,
 	);

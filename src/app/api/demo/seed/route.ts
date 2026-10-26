@@ -17,7 +17,6 @@ export async function POST() {
 			update: {},
 			create: {
 				id: userId,
-				email: `${userId}@example.com`,
 				name: "Demo Athlete",
 			},
 		});
