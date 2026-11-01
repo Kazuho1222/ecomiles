@@ -40,7 +40,7 @@ export async function POST() {
 				{
 					success: false,
 					message:
-						"Cannot seed demo data into an account with real activities.",
+						"本物のアクティビティが既に登録されているアカウントには、デモデータを追加できません。",
 				},
 				{ status: 400 },
 			);
@@ -50,7 +50,7 @@ export async function POST() {
 		if (hasDemoActivities) {
 			return NextResponse.json({
 				success: true,
-				message: "Already in demo mode.",
+				message: "すでにデモデータが生成されています。",
 			});
 		}
 
