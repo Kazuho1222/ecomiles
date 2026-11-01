@@ -376,7 +376,9 @@ export const DashboardDrilldown: React.FC<DashboardDrilldownProps> = ({
 																</span>
 															</td>
 															<td className="px-8 py-5 whitespace-nowrap text-sm text-right">
-																{activity.intervalsActivityId ? (
+																{activity.intervalsActivityId &&
+																!activity.intervalsActivityId.startsWith("demo-") &&
+																!activity.intervalsActivityId.startsWith("dummy-") ? (
 																	<a
 																		href={`https://intervals.icu/activities/${activity.intervalsActivityId}`}
 																		target="_blank"
@@ -385,15 +387,10 @@ export const DashboardDrilldown: React.FC<DashboardDrilldownProps> = ({
 																	>
 																		詳細 (Intervals)
 																	</a>
-																) : activity.stravaActivityId ? (
-																	<a
-																		href={`https://www.strava.com/activities/${activity.stravaActivityId}`}
-																		target="_blank"
-																		rel="noopener noreferrer"
-																		className="text-[#FC5200] hover:underline font-black text-[10px]"
-																	>
-																		詳細 (Strava)
-																	</a>
+																) : activity.intervalsActivityId?.startsWith("demo-") ? (
+																	<span className="text-amber-500 font-bold text-[10px]">
+																		デモ
+																	</span>
 																) : (
 																	<span className="text-slate-400 text-[10px]">詳細なし</span>
 																)}

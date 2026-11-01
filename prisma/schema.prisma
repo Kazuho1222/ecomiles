@@ -36,7 +36,6 @@ model Activity {
   id                 String       @id @default(uuid())
   userId             String       @map("user_id")
   user               User         @relation(fields: [userId], references: [id])
-  stravaActivityId   String?      @unique @map("strava_activity_id")
   intervalsActivityId String?     @unique @map("intervals_activity_id")
   activityType       ActivityType @map("activity_type")
   distance           Float        // km

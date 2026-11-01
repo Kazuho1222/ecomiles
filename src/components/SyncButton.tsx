@@ -34,7 +34,7 @@ export function SyncButton({ provider = "intervals" }: SyncButtonProps) {
 
 	const handleSync = async () => {
 		setIsSyncing(true);
-		const providerName = provider === "intervals" ? "Intervals.icu" : "Strava";
+		const providerName = "Intervals.icu";
 		const syncToastId = toast.loading(`${providerName}からデータを同期中...`, {
 			description: "しばらくお待ちください。",
 		});

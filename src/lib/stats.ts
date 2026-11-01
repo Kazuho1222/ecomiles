@@ -10,7 +10,7 @@ export const getCollectiveImpact = async () => {
 	const stats = await prisma.activity.aggregate({
 		where: {
 			NOT: {
-				stravaActivityId: {
+				intervalsActivityId: {
 					startsWith: "demo-",
 				},
 			},

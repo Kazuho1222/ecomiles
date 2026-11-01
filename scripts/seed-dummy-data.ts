@@ -52,7 +52,7 @@ async function main() {
       await prisma.activity.create({
         data: {
           userId: user.id,
-          stravaActivityId: `dummy-act-${Math.random().toString(36).substring(7)}`,
+          intervalsActivityId: `dummy-act-${Math.random().toString(36).substring(7)}`,
           activityType: type,
           distance: distance,
           activityDate: date,
