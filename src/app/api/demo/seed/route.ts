@@ -24,16 +24,14 @@ export async function POST() {
 		// 2. 既存のアクティビティの状態をチェック
 		const activities = await prisma.activity.findMany({
 			where: { userId },
-			select: { stravaActivityId: true, intervalsActivityId: true },
+			select: { intervalsActivityId: true },
 		});
 
 		const hasRealActivities = activities.some(
-			(a) => 
-				(a.stravaActivityId && !a.stravaActivityId.startsWith("demo-")) ||
-				(a.intervalsActivityId && !a.intervalsActivityId.startsWith("demo-"))
+			(a) => a.intervalsActivityId && !a.intervalsActivityId.startsWith("demo-")
 		);
 		const hasDemoActivities = activities.some((a) =>
-			a.stravaActivityId?.startsWith("demo-") || a.intervalsActivityId?.startsWith("demo-")
+			a.intervalsActivityId?.startsWith("demo-")
 		);
 
 		// 本物のアクティビティがある場合は、データを混ぜないように拒否

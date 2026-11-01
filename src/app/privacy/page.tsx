@@ -49,7 +49,7 @@ export default function PrivacyPolicy() {
 								<strong className="text-slate-800 dark:text-slate-200">アカウント情報:</strong> ログインおよびユーザー認証の目的で、Clerk経由でメールアドレス、お名前、プロフィール画像などを取得します。
 							</li>
 							<li>
-								<strong className="text-slate-800 dark:text-slate-200">アクティビティデータ:</strong> CO2削減量およびエコポイントの計算の目的で、外部連携サービス（Strava API、Intervals.icu APIなど）から、ユーザーの同意のもとでワークアウト・移動ログ（運動種目、距離、移動時間、日付など）を取得します。
+								<strong className="text-slate-800 dark:text-slate-200">アクティビティデータ:</strong> CO2削減量およびエコポイントの計算の目的で、外部連携サービス（Intervals.icu APIなど）から、ユーザーの同意のもとでワークアウト・移動ログ（運動種目、距離、移動時間、日付など）を取得します。
 							</li>
 						</ul>
 					</section>

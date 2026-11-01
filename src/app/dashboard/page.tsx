@@ -59,7 +59,7 @@ export default async function DashboardPage() {
 	});
 
 	const isDemoMode = user?.activities.some((a) =>
-		a.stravaActivityId?.startsWith("demo-") || a.intervalsActivityId?.startsWith("demo-")
+		a.intervalsActivityId?.startsWith("demo-")
 	);
 
 	// デモモードかどうかに応じて、集計対象からデモデータを除外するか決定する
@@ -68,7 +68,7 @@ export default async function DashboardPage() {
 		: {
 				userId,
 				NOT: {
-					stravaActivityId: {
+					intervalsActivityId: {
 						startsWith: "demo-",
 					},
 				},
@@ -148,7 +148,7 @@ export default async function DashboardPage() {
 								現在はデモモードで表示しています
 							</p>
 							<p className="text-[10px] font-bold text-amber-700 dark:text-amber-400">
-								実際のアクティビティを同期するには Strava または Intervals.icu と連携してください。
+								実際のアクティビティを同期するには Intervals.icu と連携してください。
 							</p>
 						</div>
 					</div>
