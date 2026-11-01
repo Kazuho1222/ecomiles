@@ -52,6 +52,11 @@ export function SyncButton({ provider = "intervals" }: SyncButtonProps) {
 					// 1. 同期されたIDを既読リストに追加して重複トーストを防ぐ
 					if (user?.id) {
 						try {
+							localStorage.setItem(
+								`lastManualSyncTime_${user.id}`,
+								Date.now().toString(),
+							);
+
 							if (result.newActivityIds) {
 								const activityKey = `seenActivityIds_${user.id}`;
 								const storedIds = localStorage.getItem(activityKey);
@@ -88,20 +93,11 @@ export function SyncButton({ provider = "intervals" }: SyncButtonProps) {
 								"Failed to persist seen IDs/badges to localStorage:",
 								error,
 							);
-							// Continue with success flow even if persistence fails
 						}
 					}
 
-					// 2. 基本的な同期成功トースト
-					toast.success(
-						`${result.newActivitiesCount} 件のアクティビティを同期しました！`,
-						{
-							icon: <CheckCircle2 className="text-emerald-500" />,
-							description: `累計で +${result.pointsAwardedTotal} pts を獲得しました。`,
-						},
-					);
-
-					// 2. CO2削減の詳細トースト
+					// 2. 同期成功トースト（件数・ポイント・CO2削減を1つに統合）
+					let detailText = `累計で +${result.pointsAwardedTotal} pts を獲得しました。`;
 					if (result.co2ReductionDelta > 0) {
 						const lifespan = calculateEarthLifespanExtension(
 							result.co2ReductionDelta,
@@ -114,13 +110,17 @@ export function SyncButton({ provider = "intervals" }: SyncButtonProps) {
 						} else {
 							lifespanText = `${lifespan.toFixed(2)}秒`;
 						}
-
-						toast("環境への貢献を更新しました", {
-							icon: <Leaf className="text-emerald-500" />,
-							description: `CO2を ${result.co2ReductionDelta.toFixed(2)}kg 削減！地球の寿命を ${lifespanText} 延ばしました。`,
-							duration: 5000,
-						});
+						detailText = `+${result.pointsAwardedTotal} pts (CO2 ${result.co2ReductionDelta.toFixed(2)}kg 削減 / 地球寿命 +${lifespanText})`;
 					}
+
+					toast.success(
+						`${result.newActivitiesCount} 件のアクティビティを同期しました！`,
+						{
+							icon: <CheckCircle2 className="text-emerald-500" />,
+							description: detailText,
+							duration: 5000,
+						},
+					);
 
 					// 3. バッジ獲得時の演出
 					if (result.newBadges && result.newBadges.length > 0) {

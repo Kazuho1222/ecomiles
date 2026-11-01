@@ -181,7 +181,8 @@ export const DashboardDrilldown: React.FC<DashboardDrilldownProps> = ({
 			if (response.ok) {
 				window.location.reload();
 			} else {
-				alert("デモデータの生成に失敗しました。");
+				const data = await response.json().catch(() => null);
+				alert(data?.message || "デモデータの生成に失敗しました。");
 			}
 		} catch (error) {
 			console.error("Demo seed error:", error);

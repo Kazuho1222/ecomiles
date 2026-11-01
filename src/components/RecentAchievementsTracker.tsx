@@ -78,8 +78,22 @@ export const RecentAchievementsTracker: React.FC<
 			}
 		}
 
+		// 直近の手動同期直後（15秒以内）の場合はSyncButton側ですでに通知されているため、重複トーストを抑止して既読化のみ行う
+		const lastManualSyncTime = Number(
+			localStorage.getItem(`lastManualSyncTime_${userId}`) || "0",
+		);
+		const isJustAfterManualSync = now.getTime() - lastManualSyncTime < 15000;
+
 		// 2. アクティビティのチェック
 		let newActivities = activities.filter(a => !seenActivityIds.has(a.id));
+
+		// 手動同期直後は既読化のみ
+		if (isJustAfterManualSync) {
+			const updatedIds = Array.from(new Set([...activities.map(a => a.id), ...Array.from(seenActivityIds)])).slice(0, 50);
+			localStorage.setItem(activityKey, JSON.stringify(updatedIds));
+			isInitialized.current = true;
+			return;
+		}
 
 		// 初回訪問時かつ非リピーター（新デバイス）の場合は、全件出すと多すぎるので最近のものに絞る
 		if (!isInitialized.current && !isReturningUser) {

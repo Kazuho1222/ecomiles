@@ -373,9 +373,15 @@ export const syncSingleIntervalsActivity = async (
 ): Promise<{ success: boolean; message?: string; activityId?: string; error?: unknown }> => {
 	console.log(`[Intervals Sync] Starting sync for Athlete: ${intervalsAthleteId}, Activity: ${intervalsActivityId}`);
 
-	// アスリートIDからユーザーを特定
+	// アスリートIDからユーザーを特定（プレフィックス i の有無両方に対応）
+	const rawAthleteId = intervalsAthleteId.toString();
+	const athleteIdVariants = [
+		rawAthleteId,
+		rawAthleteId.startsWith("i") ? rawAthleteId.slice(1) : `i${rawAthleteId}`,
+	];
+
 	const user = await prisma.user.findFirst({
-		where: { intervalsAthleteId: intervalsAthleteId.toString() },
+		where: { intervalsAthleteId: { in: athleteIdVariants } },
 	});
 
 	if (!user) {
@@ -399,19 +405,21 @@ export const syncSingleIntervalsActivity = async (
 	try {
 		let intervalsAct: IntervalsActivity;
 		try {
+			const targetAthleteId = user.intervalsAthleteId || intervalsAthleteId;
 			console.log(`[Intervals Sync] Fetching activity ${intervalsActivityId} from Intervals.icu API`);
 			intervalsAct = await getIntervalsActivityById(
 				accessToken,
-				intervalsAthleteId,
+				targetAthleteId,
 				intervalsActivityId,
 			);
 		} catch (apiErr) {
 			if (apiErr instanceof IntervalsAuthError && apiErr.code === "TOKEN_EXPIRED") {
 				console.log(`[Intervals Sync] Received 401 for activity ${intervalsActivityId}, attempting refresh...`);
 				const newAccessToken = await refreshIntervalsToken(user.id);
+				const targetAthleteId = user.intervalsAthleteId || intervalsAthleteId;
 				intervalsAct = await getIntervalsActivityById(
 					newAccessToken,
-					intervalsAthleteId,
+					targetAthleteId,
 					intervalsActivityId,
 				);
 			} else {
