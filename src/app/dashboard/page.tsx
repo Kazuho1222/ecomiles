@@ -8,6 +8,7 @@ import { DashboardDrilldown } from "@/components/DashboardDrilldown";
 import { Leaderboard } from "@/components/Leaderboard";
 import { RecentAchievementsTracker } from "@/components/RecentAchievementsTracker";
 import { ShareModal } from "@/components/ShareModal";
+import { SmartAutoSync } from "@/components/SmartAutoSync";
 import { Footer } from "@/components/Footer";
 import { checkAndAwardBadges } from "@/lib/badge-service";
 import {
@@ -240,7 +241,14 @@ export default async function DashboardPage() {
 
 			<Footer className="mt-auto" />
 
-			{/* 裏側での同期（WebHook等）を検知して通知する */}
+			{/* ログイン時・復帰時のスマート自動同期 */}
+			<SmartAutoSync
+				userId={userId}
+				intervalsConnected={!!user?.intervalsConnected}
+				isDemoMode={isDemoMode}
+			/>
+
+			{/* 裏側での同期（WebHookやスマート自動同期等）を検知して通知する */}
 			<RecentAchievementsTracker
 				userId={userId}
 				activities={user?.activities || []}
